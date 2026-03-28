@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { createTestStore, createTestState } from '../test/testUtils';
 import {
   selectCurrentBlockIndex,
+  selectCurrentBlockRemainingLabel,
   selectCurrentBlockRemainingSeconds,
+  selectCurrentTargetLabel,
   selectElapsedSeconds,
 } from './workoutSelectors';
 import workoutReducer, {
@@ -44,6 +46,20 @@ describe('workoutSlice and selectors', () => {
     store.dispatch(tickWorkout(300_000));
     expect(selectCurrentBlockIndex(store.getState())).toBe(1);
     expect(selectCurrentBlockRemainingSeconds(store.getState())).toBe(1_200);
+  });
+
+  it('formats block remaining as mm:ss and converts ftp targets to watts', () => {
+    const store = createTestStore({
+      workout: {
+        selectedWorkoutId: 'twoByTwenty',
+        status: 'active',
+        runningSinceMs: 0,
+        accumulatedElapsedMs: 305_000,
+      },
+    });
+
+    expect(selectCurrentBlockRemainingLabel(store.getState())).toBe('19:55');
+    expect(selectCurrentTargetLabel(store.getState())).toBe('225 W');
   });
 
   it('pauses and resumes without losing elapsed time', () => {

@@ -29,7 +29,13 @@ function getStatusIcon(label: string) {
 
 export function StatusBanner({ color, description, label }: StatusBannerProps) {
   return (
-    <Alert color={color} icon={getStatusIcon(label)} radius="lg" title={label}>
+    <Alert
+      className={`status-banner status-banner--${color}`}
+      icon={getStatusIcon(label)}
+      radius="28px"
+      title={label}
+      variant="light"
+    >
       {description}
     </Alert>
   );

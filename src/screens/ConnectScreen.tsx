@@ -6,8 +6,20 @@ import { CapabilitiesPanel } from '../components/CapabilitiesPanel';
 import { ConnectionPanel } from '../components/ConnectionPanel';
 import { DiagnosticsPanel } from '../components/DiagnosticsPanel';
 import { StatusBanner } from '../components/StatusBanner';
-import { selectCanContinueFromConnect, selectCanRetrySetup, selectCanStartSetup, selectConnectStatusBannerModel, selectDeviceName, selectTrainerCapabilityStatuses, selectTrainerEnvironment } from '../state/trainerSelectors';
-import { connectTrainer, refreshTrainerEnvironment, retryTrainerSetup } from '../state/trainerThunks';
+import {
+  selectCanContinueFromConnect,
+  selectCanRetrySetup,
+  selectCanStartSetup,
+  selectConnectStatusBannerModel,
+  selectDeviceName,
+  selectTrainerCapabilityStatuses,
+  selectTrainerEnvironment,
+} from '../state/trainerSelectors';
+import {
+  connectTrainer,
+  refreshTrainerEnvironment,
+  retryTrainerSetup,
+} from '../state/trainerThunks';
 import { selectDiagnostics } from '../state/metricsSelectors';
 
 export function ConnectScreen() {
@@ -33,34 +45,32 @@ export function ConnectScreen() {
       <ConnectionPanel deviceName={deviceName} mode={environment.mode} />
       <CapabilitiesPanel statuses={statuses} />
 
-      <Group>
+      <Group className="action-row">
         <Button
+          className="button-primary"
           disabled={!canStartSetup}
           onClick={() => {
             void dispatch(refreshTrainerEnvironment());
             void dispatch(connectTrainer());
           }}
-          radius="xl"
         >
           Connect Trainer
         </Button>
         <Button
+          className="button-quiet"
           disabled={!canRetrySetup}
           onClick={() => {
             void dispatch(retryTrainerSetup());
           }}
-          radius="xl"
-          variant="default"
         >
           Retry Setup
         </Button>
         <Button
+          className="button-secondary"
           disabled={!canContinue}
           onClick={() => {
             navigate('/workouts');
           }}
-          radius="xl"
-          variant="light"
         >
           Continue
         </Button>

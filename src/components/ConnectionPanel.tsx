@@ -1,4 +1,4 @@
-import { Badge, Group, Paper, Stack, Text } from '@mantine/core';
+import { Paper, Stack, Text } from '@mantine/core';
 
 import type { TrainerMode } from '../domain/trainer';
 
@@ -9,24 +9,26 @@ interface ConnectionPanelProps {
 
 export function ConnectionPanel({ deviceName, mode }: ConnectionPanelProps) {
   return (
-    <Paper p="lg" radius="xl" withBorder>
-      <Stack gap="md">
-        <Group justify="space-between">
-          <div>
-            <Text fw={700} size="lg">
-              Trainer Connection
-            </Text>
-            <Text c="dimmed" size="sm">
-              Connect a smart trainer, inspect capabilities, and continue only when live power is available.
+    <Paper className="panel" p="xl" radius="32px">
+      <Stack gap="lg">
+        <div>
+          <Text className="section-title">Trainer Connection</Text>
+        </div>
+
+        <div className="data-grid">
+          <div className="data-chip data-chip--accent">
+            <Text className="data-chip__label">Mode</Text>
+            <Text className="data-chip__value">
+              {mode === 'simulate' ? 'Simulation' : 'Web Bluetooth'}
             </Text>
           </div>
-
-          {mode === 'simulate' ? <Badge color="violet">Simulation</Badge> : null}
-        </Group>
-
-        <Text size="sm">
-          {deviceName ? `Selected device: ${deviceName}` : 'No trainer selected yet.'}
-        </Text>
+          <div className="data-chip">
+            <Text className="data-chip__label">Device</Text>
+            <Text className="data-chip__value">
+              {deviceName ?? 'No trainer selected yet'}
+            </Text>
+          </div>
+        </div>
       </Stack>
     </Paper>
   );

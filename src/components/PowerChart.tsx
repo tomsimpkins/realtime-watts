@@ -25,39 +25,34 @@ export function PowerChart({ samples }: PowerChartProps) {
   }));
 
   return (
-    <Paper p="lg" radius="xl" withBorder>
+    <Paper className="chart-shell" p="xl" radius="32px">
       <Stack gap="md">
         <div>
-          <Text fw={700} size="lg">
-            Recent Power
-          </Text>
-          <Text c="dimmed" size="sm">
-            Rolling wattage history from the current session.
-          </Text>
+          <Text className="section-title">Recent Power</Text>
+          <Text className="section-copy">Rolling wattage history from the current session.</Text>
         </div>
 
         {chartData.length ? (
           <div style={{ height: 240, width: '100%' }}>
             <ResponsiveContainer>
               <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="powerGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#94d82d" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#94d82d" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="#2b2f3b" strokeDasharray="3 3" />
-                <XAxis dataKey="label" minTickGap={28} stroke="#9ca3af" />
-                <YAxis allowDecimals={false} stroke="#9ca3af" width={44} />
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="label" minTickGap={28} stroke="rgba(255,255,255,0.42)" />
+                <YAxis allowDecimals={false} stroke="rgba(255,255,255,0.42)" width={44} />
                 <Tooltip
+                  contentStyle={{
+                    background: '#101821',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '16px',
+                  }}
                   formatter={(value: number) => [`${value} W`, 'Power']}
                   labelFormatter={(label) => `Time ${label}`}
                 />
                 <Area
                   dataKey="watts"
-                  fill="url(#powerGradient)"
+                  fill="rgba(0, 212, 187, 0.14)"
                   fillOpacity={1}
-                  stroke="#94d82d"
+                  stroke="#00d4bb"
                   strokeWidth={3}
                   type="monotone"
                 />

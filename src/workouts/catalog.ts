@@ -28,7 +28,7 @@ function createFtpTargetBlock(
 }
 
 const tabataBlocks: WorkoutBlock[] = [
-  createNoTargetBlock('warmup', 'Warm-up', 300),
+  createNoTargetBlock('warmup', 'Warm-up', 10),
   ...Array.from({ length: 8 }).flatMap((_, index) => [
     createFtpTargetBlock(`tabata-${index + 1}`, `Hard ${index + 1}`, 20, 120),
     createNoTargetBlock(`rest-${index + 1}`, `Rest ${index + 1}`, 10),

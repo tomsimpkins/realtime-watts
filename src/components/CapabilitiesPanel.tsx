@@ -1,4 +1,4 @@
-import { Badge, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core';
+import { Paper, SimpleGrid, Text, ThemeIcon } from '@mantine/core';
 import {
   IconAdjustments,
   IconBike,
@@ -15,7 +15,6 @@ interface CapabilitiesPanelProps {
 }
 
 interface CapabilityConfig {
-  description: string;
   icon: typeof IconBolt;
   key: Capability;
   label: string;
@@ -25,49 +24,54 @@ const CAPABILITIES: CapabilityConfig[] = [
   {
     key: 'power',
     label: 'Power',
-    description: 'Live cycling power measurement',
     icon: IconBolt,
   },
   {
     key: 'cadence',
     label: 'Cadence',
-    description: 'Pedal cadence telemetry',
     icon: IconRotate,
   },
   {
     key: 'speed',
     label: 'Speed',
-    description: 'Virtual speed telemetry',
     icon: IconGauge,
   },
   {
     key: 'resistanceControl',
     label: 'Resistance Control',
-    description: 'Control-oriented FTMS features',
     icon: IconAdjustments,
   },
   {
     key: 'ergMode',
     label: 'ERG Mode',
-    description: 'Best-effort ERG support detection',
     icon: IconBike,
   },
   {
     key: 'simulationMode',
     label: 'Simulation Mode',
-    description: 'Best-effort simulation support detection',
     icon: IconRun,
   },
 ];
 
-function getStatusColor(status: TrainerCapabilityStatuses[Capability]) {
+function getStatusTone(status: TrainerCapabilityStatuses[Capability]) {
   switch (status) {
     case 'available':
-      return 'green';
+      return 'available';
     case 'checking':
-      return 'yellow';
+      return 'checking';
     case 'unavailable':
-      return 'gray';
+      return 'unavailable';
+    default:
+      return 'unknown';
+  }
+}
+
+function getIconColor(status: TrainerCapabilityStatuses[Capability]) {
+  switch (status) {
+    case 'available':
+      return 'accent';
+    case 'checking':
+      return 'ember';
     default:
       return 'dark';
   }
@@ -75,47 +79,36 @@ function getStatusColor(status: TrainerCapabilityStatuses[Capability]) {
 
 export function CapabilitiesPanel({ statuses }: CapabilitiesPanelProps) {
   return (
-    <Paper p="lg" radius="xl" withBorder>
-      <Stack gap="md">
-        <div>
-          <Text fw={700} size="lg">
-            Detected Capabilities
-          </Text>
-          <Text c="dimmed" size="sm">
-            Capability availability is inferred from discovered BLE services and characteristics.
-          </Text>
-        </div>
+    <Paper className="panel" p="xl" radius="32px">
+      <div>
+        <Text className="section-title">Detected Capabilities</Text>
+      </div>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-          {CAPABILITIES.map((capability) => {
-            const Icon = capability.icon;
-            const status = statuses[capability.key];
+      <SimpleGrid className="capability-grid" cols={{ base: 1, sm: 2 }} mt="lg" spacing="md">
+        {CAPABILITIES.map((capability) => {
+          const Icon = capability.icon;
+          const status = statuses[capability.key];
+          const tone = getStatusTone(status);
 
-            return (
-              <Paper key={capability.key} p="md" radius="lg" withBorder>
-                <Group justify="space-between" wrap="nowrap">
-                  <Group gap="sm" wrap="nowrap">
-                    <ThemeIcon color={getStatusColor(status)} radius="xl" variant="light">
-                      <Icon size={18} />
-                    </ThemeIcon>
-                    <div>
-                      <Text fw={700} size="sm">
-                        {capability.label}
-                      </Text>
-                      <Text c="dimmed" size="xs">
-                        {capability.description}
-                      </Text>
-                    </div>
-                  </Group>
-                  <Badge color={getStatusColor(status)} variant="light">
-                    {status}
-                  </Badge>
-                </Group>
-              </Paper>
-            );
-          })}
-        </SimpleGrid>
-      </Stack>
+          return (
+            <div className={`capability-item capability-item--${tone}`} key={capability.key}>
+              <div className="capability-main">
+                <ThemeIcon
+                  color={getIconColor(status)}
+                  radius="xl"
+                  size={52}
+                  variant="light"
+                >
+                  <Icon size={24} stroke={2.2} />
+                </ThemeIcon>
+                <div className="capability-copy">
+                  <Text className="capability-title">{capability.label}</Text>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </SimpleGrid>
     </Paper>
   );
 }

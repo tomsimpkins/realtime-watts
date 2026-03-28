@@ -4,6 +4,20 @@ import type { RootState } from '../app/store';
 import type { WorkoutBlock } from '../domain/workout';
 import { WORKOUT_CATALOG, WORKOUTS_BY_ID } from '../workouts/catalog';
 
+const DEFAULT_FTP_WATTS = 250;
+
+function formatSecondsAsClock(totalSeconds: number) {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safeSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = Math.floor(safeSeconds % 60)
+    .toString()
+    .padStart(2, '0');
+
+  return `${minutes}:${seconds}`;
+}
+
 export const selectWorkoutState = (state: RootState) => state.workout;
 
 export const selectWorkoutCatalog = () => WORKOUT_CATALOG;
@@ -36,16 +50,7 @@ export const selectElapsedSeconds = createSelector(
 
 export const selectElapsedTimeLabel = createSelector(
   [selectElapsedSeconds],
-  (elapsedSeconds) => {
-    const minutes = Math.floor(elapsedSeconds / 60)
-      .toString()
-      .padStart(2, '0');
-    const seconds = Math.floor(elapsedSeconds % 60)
-      .toString()
-      .padStart(2, '0');
-
-    return `${minutes}:${seconds}`;
-  }
+  (elapsedSeconds) => formatSecondsAsClock(elapsedSeconds)
 );
 
 function findCurrentBlock(blocks: WorkoutBlock[], elapsedSeconds: number) {
@@ -103,6 +108,14 @@ export const selectCurrentBlockRemainingSeconds = createSelector(
   (details) => details.remainingSeconds
 );
 
+export const selectCurrentBlockRemainingLabel = createSelector(
+  [selectCurrentBlockRemainingSeconds],
+  (remainingSeconds) =>
+    typeof remainingSeconds === 'number'
+      ? formatSecondsAsClock(remainingSeconds)
+      : '—'
+);
+
 export const selectCurrentTargetLabel = createSelector(
   [selectCurrentBlock],
   (block) => {
@@ -111,7 +124,9 @@ export const selectCurrentTargetLabel = createSelector(
     }
 
     if (block.target.kind === 'ftpPercent') {
-      return `${block.target.value}% FTP`;
+      const ftpPercent = block.target.value ?? 0;
+      const targetWatts = Math.round((DEFAULT_FTP_WATTS * ftpPercent) / 100);
+      return `${targetWatts} W`;
     }
 
     return `${block.target.value} W`;

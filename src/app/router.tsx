@@ -7,7 +7,11 @@ import { FlowStepper } from '../components/FlowStepper';
 import { ConnectScreen } from '../screens/ConnectScreen';
 import { RideScreen } from '../screens/RideScreen';
 import { WorkoutSelectionScreen } from '../screens/WorkoutSelectionScreen';
-import { selectCanAccessRide, selectCanAccessWorkouts, selectFlowStepperModel } from '../state/appSelectors';
+import {
+  selectCanAccessRide,
+  selectCanAccessWorkouts,
+  selectFlowStepperModel,
+} from '../state/appSelectors';
 
 function getRouterBasename() {
   const baseUrl = import.meta.env.BASE_URL ?? '/';
@@ -18,14 +22,16 @@ function AppLayout() {
   const flowStepper = useAppSelector(selectFlowStepperModel);
 
   return (
-    <Container py="xl" size="lg">
+    <Container className="app-shell" py="xl" size="lg">
       <Stack gap="lg">
-        <div>
-          <Title order={1}>Realtime Watts</Title>
-          <Text c="dimmed" mt={6}>
+        <header className="app-header">
+          <Title className="app-title" order={1}>
+            Realtime Watts
+          </Title>
+          <Text className="app-subtitle">
             Guided smart trainer workflow for setup, workout selection, and ride telemetry.
           </Text>
-        </div>
+        </header>
         <FlowStepper
           connectComplete={flowStepper.connectComplete}
           currentScreen={flowStepper.currentScreen}

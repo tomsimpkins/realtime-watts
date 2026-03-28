@@ -1,5 +1,4 @@
-import { Divider, Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
-import { Fragment } from 'react';
+import { Text, ThemeIcon } from '@mantine/core';
 import { IconCheck, IconCircleDot } from '@tabler/icons-react';
 
 import type { AppScreen } from '../state/appSlice';
@@ -30,7 +29,7 @@ const STEPS: StepConfig[] = [
   {
     key: 'ride',
     label: 'Ride',
-    description: 'Live telemetry and workout timing',
+    description: 'Live telemetry and timing',
   },
 ];
 
@@ -55,46 +54,24 @@ function getStepState(
 
 export function FlowStepper(props: FlowStepperProps) {
   return (
-    <Group align="stretch" gap="sm" wrap="nowrap">
-      {STEPS.map((step, index) => {
+    <div className="stepper">
+      {STEPS.map((step) => {
         const state = getStepState(step, props);
-        const isComplete = state === 'complete';
-        const isActive = state === 'active';
+        const iconColor =
+          state === 'complete' ? 'ember' : state === 'active' ? 'accent' : 'dark';
 
         return (
-          <Fragment key={step.key}>
-            <Paper
-              p="md"
-              radius="lg"
-              style={{
-                border: '1px solid rgba(255,255,255,0.08)',
-                flex: 1,
-                opacity: state === 'upcoming' ? 0.72 : 1,
-              }}
-            >
-              <Group align="flex-start" gap="sm" wrap="nowrap">
-                <ThemeIcon
-                  color={isComplete ? 'green' : isActive ? 'lime' : 'gray'}
-                  radius="xl"
-                  size="lg"
-                  variant={isActive ? 'filled' : 'light'}
-                >
-                  {isComplete ? <IconCheck size={18} /> : <IconCircleDot size={18} />}
-                </ThemeIcon>
-                <Stack gap={2}>
-                  <Text fw={700} size="sm">
-                    {step.label}
-                  </Text>
-                  <Text c="dimmed" size="xs">
-                    {step.description}
-                  </Text>
-                </Stack>
-              </Group>
-            </Paper>
-            {index < STEPS.length - 1 ? <Divider orientation="vertical" /> : null}
-          </Fragment>
+          <div className={`stepper-item stepper-item--${state}`} key={step.key}>
+            <ThemeIcon color={iconColor} radius="xl" size="lg" variant="light">
+              {state === 'complete' ? <IconCheck size={18} /> : <IconCircleDot size={18} />}
+            </ThemeIcon>
+            <div className="stepper-copy">
+              <Text className="stepper-title">{step.label}</Text>
+              <Text className="stepper-description">{step.description}</Text>
+            </div>
+          </div>
         );
       })}
-    </Group>
+    </div>
   );
 }

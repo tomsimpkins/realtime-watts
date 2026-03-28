@@ -1,11 +1,15 @@
-import { Badge, Button, Group, Paper, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { PowerDisplay } from '../components/PowerDisplay';
 import { StatusBanner } from '../components/StatusBanner';
-import { selectCadenceDisplay, selectPowerDisplay, selectRecentPower } from '../state/metricsSelectors';
+import {
+  selectCadenceDisplay,
+  selectPowerDisplay,
+  selectRecentPower,
+} from '../state/metricsSelectors';
 import { retryTrainerConnection } from '../state/trainerThunks';
 import { selectRideBannerModel } from '../state/trainerSelectors';
 import { endWorkout, pauseWorkout, resumeWorkout } from '../state/workoutSlice';
@@ -13,7 +17,7 @@ import {
   selectCanEndWorkout,
   selectCanPauseWorkout,
   selectCanResumeWorkout,
-  selectCurrentBlockRemainingSeconds,
+  selectCurrentBlockRemainingLabel,
   selectWorkoutSummary,
 } from '../state/workoutSelectors';
 
@@ -30,9 +34,7 @@ export function RideScreen() {
   const canEnd = useAppSelector(selectCanEndWorkout);
   const canPause = useAppSelector(selectCanPauseWorkout);
   const canResume = useAppSelector(selectCanResumeWorkout);
-  const currentBlockRemainingSeconds = useAppSelector(
-    selectCurrentBlockRemainingSeconds
-  );
+  const currentBlockRemainingLabel = useAppSelector(selectCurrentBlockRemainingLabel);
   const powerDisplay = useAppSelector(selectPowerDisplay);
   const recentPower = useAppSelector(selectRecentPower);
   const rideBanner = useAppSelector(selectRideBannerModel);
@@ -63,61 +65,40 @@ export function RideScreen() {
         />
       ) : null}
 
-      <Paper p="lg" radius="xl" withBorder>
-        <Stack gap="md">
-          <Group justify="space-between" wrap="nowrap">
+      <Paper className="panel" p="xl" radius="32px">
+        <Stack gap="lg">
+          <Group justify="space-between" align="flex-start">
             <div>
-              <Text fw={700} size="lg">
-                {workoutSummary.workoutName}
-              </Text>
-              <Text c="dimmed" size="sm">
-                {workoutSummary.currentBlockLabel}
-              </Text>
+              <Text className="section-title">{workoutSummary.workoutName}</Text>
+              <Text className="section-copy">{workoutSummary.currentBlockLabel}</Text>
             </div>
-            <Badge color={workoutSummary.status === 'completed' ? 'green' : 'lime'}>
+            <Badge color={workoutSummary.status === 'completed' ? 'ember' : 'accent'}>
               {workoutSummary.status}
             </Badge>
           </Group>
 
-          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-            <div>
-              <Text c="dimmed" size="xs" tt="uppercase">
-                Elapsed Time
-              </Text>
-              <Text fw={700} size="lg">
-                {workoutSummary.elapsedTimeLabel}
-              </Text>
+          <div className="summary-grid">
+            <div className="summary-card">
+              <Text className="summary-card__label">Elapsed Time</Text>
+              <Text className="summary-card__value">{workoutSummary.elapsedTimeLabel}</Text>
             </div>
-            <div>
-              <Text c="dimmed" size="xs" tt="uppercase">
-                Current Target
-              </Text>
-              <Text fw={700} size="lg">
-                {workoutSummary.currentTargetLabel}
-              </Text>
+            <div className="summary-card">
+              <Text className="summary-card__label">Current Target</Text>
+              <Text className="summary-card__value">{workoutSummary.currentTargetLabel}</Text>
             </div>
-            <div>
-              <Text c="dimmed" size="xs" tt="uppercase">
-                Block Remaining
-              </Text>
-              <Text fw={700} size="lg">
-                {typeof currentBlockRemainingSeconds === 'number'
-                  ? `${currentBlockRemainingSeconds}s`
-                  : '—'}
-              </Text>
+            <div className="summary-card">
+              <Text className="summary-card__label">Block Remaining</Text>
+              <Text className="summary-card__value">{currentBlockRemainingLabel}</Text>
             </div>
-          </SimpleGrid>
+          </div>
         </Stack>
       </Paper>
 
-      <PowerDisplay
-        subtitle={`Cadence: ${cadenceDisplay}`}
-        wattsDisplay={powerDisplay}
-      />
+      <PowerDisplay cadenceDisplay={cadenceDisplay} powerDisplay={powerDisplay} />
 
       <Suspense
         fallback={
-          <Paper p="lg" radius="xl" withBorder>
+          <Paper className="chart-shell" p="xl" radius="32px">
             <Text c="dimmed" size="sm">
               Loading chart…
             </Text>
@@ -127,34 +108,34 @@ export function RideScreen() {
         <PowerChart samples={recentPower} />
       </Suspense>
 
-      <Group>
+      <Group className="action-row">
         {canPause ? (
-          <Button onClick={() => dispatch(pauseWorkout(Date.now()))} radius="xl" variant="default">
+          <Button className="button-quiet" onClick={() => dispatch(pauseWorkout(Date.now()))}>
             Pause
           </Button>
         ) : null}
         {canResume ? (
-          <Button onClick={() => dispatch(resumeWorkout(Date.now()))} radius="xl" variant="default">
+          <Button className="button-quiet" onClick={() => dispatch(resumeWorkout(Date.now()))}>
             Resume
           </Button>
         ) : null}
         {rideBanner ? (
           <Button
+            className="button-primary"
             onClick={() => {
               void dispatch(retryTrainerConnection());
             }}
-            radius="xl"
           >
             Retry Trainer
           </Button>
         ) : null}
         {canEnd && !showCompletionCta ? (
-          <Button color="red" onClick={handleEndRide} radius="xl" variant="light">
+          <Button className="button-secondary" onClick={handleEndRide}>
             End Ride
           </Button>
         ) : null}
         {showCompletionCta ? (
-          <Button onClick={handleEndRide} radius="xl">
+          <Button className="button-primary" onClick={handleEndRide}>
             Choose Another Workout
           </Button>
         ) : null}

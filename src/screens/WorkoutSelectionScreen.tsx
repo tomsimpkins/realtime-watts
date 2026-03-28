@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Group, SimpleGrid, Stack, Text } from '@mantine/core';
+import { Badge, Button, Card, Group, Stack, Text } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../app/hooks';
@@ -28,65 +28,59 @@ export function WorkoutSelectionScreen() {
 
   return (
     <Stack gap="lg">
-      <Card padding="lg" radius="xl" withBorder>
-        <Group justify="space-between">
+      <Card className="panel" padding="xl" radius="32px">
+        <Group justify="space-between" align="flex-start">
           <div>
-            <Text fw={700} size="lg">
-              Connected Trainer
-            </Text>
-            <Text c="dimmed" size="sm">
-              {deviceName ?? 'Trainer ready'}
+            <Text className="section-title">Choose a Workout</Text>
+            <Text className="section-copy">
+              Trainer ready: {deviceName ?? 'Connected trainer'}
             </Text>
           </div>
-          <Button onClick={() => navigate('/connect')} radius="xl" variant="default">
+          <Button className="button-quiet" onClick={() => navigate('/connect')}>
             Back to Setup
           </Button>
         </Group>
       </Card>
 
-      <div>
-        <Text fw={700} size="lg">
-          Choose a Workout
-        </Text>
-        <Text c="dimmed" size="sm">
-          Pick a workout and jump straight into the ride dashboard.
-        </Text>
-      </div>
-
-      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+      <div className="workout-grid">
         {WORKOUT_CATALOG.map((workout) => (
-          <Card key={workout.id} padding="lg" radius="xl" withBorder>
+          <Card className="workout-card" key={workout.id} padding="xl" radius="28px">
             <Stack gap="md" h="100%" justify="space-between">
-              <Stack gap="xs">
-                <Group justify="space-between">
-                  <Text fw={700} size="lg">
-                    {workout.name}
-                  </Text>
-                  <Badge color={workout.type === 'freeRide' ? 'blue' : 'lime'}>
+              <Stack gap="sm">
+                <Group justify="space-between" align="flex-start">
+                  <div>
+                    <Text className="section-title">{workout.name}</Text>
+                    <Text className="section-copy">{workout.description}</Text>
+                  </div>
+                  <Badge color={workout.type === 'freeRide' ? 'ember' : 'accent'}>
                     {workout.type === 'freeRide' ? 'Free Ride' : 'Structured'}
                   </Badge>
                 </Group>
-                <Text c="dimmed" size="sm">
-                  {workout.description}
-                </Text>
-                <Text size="sm">Duration: {formatDuration(workout.durationSeconds)}</Text>
-                <Text size="sm">Blocks: {workout.blocks.length || 'Open-ended'}</Text>
+
+                <div className="workout-meta">
+                  <span className="workout-meta-item">
+                    Duration: {formatDuration(workout.durationSeconds)}
+                  </span>
+                  <span className="workout-meta-item">
+                    Blocks: {workout.blocks.length || 'Open-ended'}
+                  </span>
+                </div>
               </Stack>
 
               <Button
+                className={workout.type === 'freeRide' ? 'button-secondary' : 'button-primary'}
                 onClick={() => {
                   dispatch(selectWorkout(workout.id));
                   dispatch(startWorkout(Date.now()));
                   navigate('/ride');
                 }}
-                radius="xl"
               >
                 Start Workout
               </Button>
             </Stack>
           </Card>
         ))}
-      </SimpleGrid>
+      </div>
     </Stack>
   );
 }

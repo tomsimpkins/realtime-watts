@@ -184,6 +184,7 @@ describe('app routing and screens', () => {
       }
     );
 
-    expect(screen.getByText('Live Power')).toBeInTheDocument();
+    expect(screen.getByText('Power')).toBeInTheDocument();
+    expect(screen.getByText('Cadence')).toBeInTheDocument();
   });
 });
