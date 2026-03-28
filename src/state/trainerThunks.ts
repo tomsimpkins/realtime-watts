@@ -2,7 +2,11 @@ import type { AppDispatch, AppThunk, RootState } from '../app/store';
 import { createTrainerClient, type TrainerClient } from '../ble/trainerClient';
 import { createCheckingCapabilityResolution, resolveCapabilities } from '../ble/capabilityResolver';
 import type { TrainerEnvironment } from '../domain/trainer';
-import { decodeCyclingPowerMeasurement } from '../protocol/cyclingPower';
+import {
+  decodeCyclingPowerPacket,
+  estimateCadenceRpm,
+  type CyclingPowerCrankData,
+} from '../protocol/cyclingPower';
 import { getTrainerEnvironment } from '../utils/environment';
 import { getUserFacingError, logDebug, logError } from '../utils/errors';
 import { markStreamIdle, pushPowerSample, resetMetrics } from './metricsSlice';
@@ -50,16 +54,44 @@ function bindClientListeners(
   getState: () => RootState
 ): void {
   releaseClientSubscriptions();
+  let previousCrankData: CyclingPowerCrankData | undefined;
+  let previousCadenceRpm: number | undefined;
 
   unsubscribePower = client.subscribeToPower((packet) => {
-    const sample = decodeCyclingPowerMeasurement(packet);
+    const decoded = decodeCyclingPowerPacket(packet);
 
-    if (!sample) {
+    if (!decoded) {
       logDebug('Ignoring malformed or unsupported cycling power packet');
       return;
     }
 
-    dispatch(pushPowerSample(sample));
+    const cadenceRpm =
+      estimateCadenceRpm(previousCrankData, decoded.crankRevolutionData) ??
+      previousCadenceRpm;
+
+    if (decoded.crankRevolutionData) {
+      const crankDataChanged =
+        !previousCrankData ||
+        decoded.crankRevolutionData.cumulativeCrankRevolutions !==
+          previousCrankData.cumulativeCrankRevolutions ||
+        decoded.crankRevolutionData.lastCrankEventTime !==
+          previousCrankData.lastCrankEventTime;
+
+      if (crankDataChanged) {
+        previousCrankData = decoded.crankRevolutionData;
+      }
+    }
+
+    if (typeof cadenceRpm === 'number') {
+      previousCadenceRpm = cadenceRpm;
+    }
+
+    dispatch(
+      pushPowerSample({
+        ...decoded.measurement,
+        cadenceRpm,
+      })
+    );
   });
 
   unsubscribeDisconnect = client.onDisconnected(() => {

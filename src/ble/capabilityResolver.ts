@@ -45,10 +45,12 @@ export function resolveCapabilities({
     return {
       capabilities: {
         ...createEmptyCapabilities(),
+        cadence: true,
         power: true,
       },
       statuses: {
         ...createCapabilityStatuses('unavailable'),
+        cadence: 'available',
         power: 'available',
       },
     };

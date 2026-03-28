@@ -262,6 +262,10 @@ class MockTrainerClient implements TrainerClient {
   private readonly disconnectCallbacks = new Set<DisconnectCallback>();
   private intervalId?: number;
   private startedAt = Date.now();
+  private lastEmitAt = Date.now();
+  private cumulativeCrankRevolutions = 0;
+  private crankEventTime = 0;
+  private crankRemainder = 0;
   private readonly device: TrainerDeviceInfo = {
     id: 'simulated-trainer',
     name: 'Simulated Trainer',
@@ -273,6 +277,10 @@ class MockTrainerClient implements TrainerClient {
 
   async connect(): Promise<ConnectedTrainer> {
     this.startedAt = Date.now();
+    this.lastEmitAt = this.startedAt;
+    this.cumulativeCrankRevolutions = 0;
+    this.crankEventTime = 0;
+    this.crankRemainder = 0;
     this.startEmitter();
 
     return {
@@ -314,7 +322,10 @@ class MockTrainerClient implements TrainerClient {
     this.stopEmitter();
 
     this.intervalId = window.setInterval(() => {
-      const elapsedSeconds = (Date.now() - this.startedAt) / 1000;
+      const now = Date.now();
+      const elapsedSeconds = (now - this.startedAt) / 1000;
+      const intervalSeconds = Math.max(0, (now - this.lastEmitAt) / 1000);
+      this.lastEmitAt = now;
       const watts = Math.max(
         0,
         Math.round(
@@ -323,11 +334,48 @@ class MockTrainerClient implements TrainerClient {
             25 * Math.sin(elapsedSeconds * 1.7)
         )
       );
+      const cadenceRpm = Math.max(
+        65,
+        Math.round(
+          88 +
+            8 * Math.sin(elapsedSeconds * 0.5) +
+            4 * Math.sin(elapsedSeconds * 1.3)
+        )
+      );
+
+      this.advanceCrankState(cadenceRpm, intervalSeconds);
 
       this.powerCallbacks.forEach((callback) =>
-        callback(createSimulationPacket(watts))
+        callback(
+          createSimulationPacket(
+            watts,
+            this.cumulativeCrankRevolutions,
+            this.crankEventTime
+          )
+        )
       );
     }, 500);
+  }
+
+  private advanceCrankState(cadenceRpm: number, intervalSeconds: number): void {
+    this.crankRemainder += (cadenceRpm * intervalSeconds) / 60;
+    const completedRevolutions = Math.floor(this.crankRemainder);
+
+    if (completedRevolutions <= 0) {
+      return;
+    }
+
+    this.crankRemainder -= completedRevolutions;
+    this.cumulativeCrankRevolutions =
+      (this.cumulativeCrankRevolutions + completedRevolutions) % 0x1_0000;
+
+    const ticksPerRevolution = Math.max(
+      1,
+      Math.round((60 * 1024) / cadenceRpm)
+    );
+    this.crankEventTime =
+      (this.crankEventTime + completedRevolutions * ticksPerRevolution) %
+      0x1_0000;
   }
 
   private stopEmitter(): void {
@@ -338,12 +386,18 @@ class MockTrainerClient implements TrainerClient {
   }
 }
 
-function createSimulationPacket(watts: number): DataView {
-  const buffer = new ArrayBuffer(4);
+function createSimulationPacket(
+  watts: number,
+  cumulativeCrankRevolutions: number,
+  lastCrankEventTime: number
+): DataView {
+  const buffer = new ArrayBuffer(8);
   const view = new DataView(buffer);
 
-  view.setUint16(0, 0, true);
+  view.setUint16(0, 1 << 5, true);
   view.setInt16(2, watts, true);
+  view.setUint16(4, cumulativeCrankRevolutions, true);
+  view.setUint16(6, lastCrankEventTime, true);
 
   return view;
 }

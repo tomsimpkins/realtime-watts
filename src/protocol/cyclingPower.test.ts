@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decodeCyclingPowerMeasurement,
   decodeCyclingPowerPacket,
+  estimateCadenceRpm,
 } from './cyclingPower';
 
 function createDataView(bytes: number[]): DataView {
@@ -49,5 +50,40 @@ describe('decodeCyclingPowerMeasurement', () => {
         source: 'cps',
       },
     });
+  });
+
+  it('extracts crank revolution data when present', () => {
+    const decoded = decodeCyclingPowerPacket(
+      createDataView([0x20, 0x00, 0x90, 0x01, 0x0a, 0x00, 0x00, 0x04]),
+      5678
+    );
+
+    expect(decoded).toEqual({
+      flags: 0x0020,
+      crankRevolutionData: {
+        cumulativeCrankRevolutions: 10,
+        lastCrankEventTime: 1024,
+      },
+      measurement: {
+        timestamp: 5678,
+        watts: 400,
+        source: 'cps',
+      },
+    });
+  });
+
+  it('estimates cadence from crank revolution deltas', () => {
+    expect(
+      estimateCadenceRpm(
+        {
+          cumulativeCrankRevolutions: 10,
+          lastCrankEventTime: 1024,
+        },
+        {
+          cumulativeCrankRevolutions: 11,
+          lastCrankEventTime: 2048,
+        }
+      )
+    ).toBe(60);
   });
 });

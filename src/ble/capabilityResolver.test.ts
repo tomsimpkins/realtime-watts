@@ -95,7 +95,7 @@ describe('resolveCapabilities', () => {
     expect(resolveCapabilities({ mode: 'simulate' })).toEqual({
       capabilities: {
         power: true,
-        cadence: false,
+        cadence: true,
         speed: false,
         resistanceControl: false,
         ergMode: false,
@@ -103,7 +103,7 @@ describe('resolveCapabilities', () => {
       },
       statuses: {
         power: 'available',
-        cadence: 'unavailable',
+        cadence: 'available',
         speed: 'unavailable',
         resistanceControl: 'unavailable',
         ergMode: 'unavailable',
