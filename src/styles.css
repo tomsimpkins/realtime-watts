@@ -1,0 +1,31 @@
+:root {
+  color: #f8f9fa;
+  color-scheme: dark;
+  font-family: Inter, system-ui, sans-serif;
+  background: #05070b;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, rgba(148, 216, 45, 0.16), transparent 28%),
+    linear-gradient(180deg, #081018 0%, #05070b 100%);
+}
+
+.power-display {
+  backdrop-filter: blur(14px);
+  background: rgba(10, 14, 21, 0.82);
+}
+
+.power-value {
+  font-size: clamp(5rem, 18vw, 8rem);
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  line-height: 0.92;
+}
