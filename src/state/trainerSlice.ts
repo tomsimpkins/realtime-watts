@@ -2,33 +2,26 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import type {
   ConnectionState,
-  PowerMeasurement,
+  DiscoveredBleTopology,
+  TrainerCapabilities,
+  TrainerCapabilityStatuses,
   TrainerDeviceInfo,
   TrainerEnvironment,
   TrainerState,
 } from '../domain/trainer';
+import {
+  createCapabilityStatuses,
+  createEmptyCapabilities,
+} from '../domain/trainer';
 import { getTrainerEnvironment } from '../utils/environment';
-import { appendAndTrimByTime } from '../utils/ringBuffer';
-
-const MAX_RECENT_POWER_SAMPLES = 240;
-const RECENT_POWER_WINDOW_MS = 120_000;
 
 const initialState: TrainerState = {
   connectionState: 'idle',
-  recentPower: [],
   environment: getTrainerEnvironment(),
-  diagnostics: {
-    sampleCount: 0,
-  },
+  capabilities: createEmptyCapabilities(),
+  capabilityStatuses: createCapabilityStatuses('unknown'),
+  degradedDuringRide: false,
 };
-
-function resetLiveState(state: TrainerState): void {
-  state.latestPower = undefined;
-  state.recentPower = [];
-  state.diagnostics = {
-    sampleCount: 0,
-  };
-}
 
 const trainerSlice = createSlice({
   name: 'trainer',
@@ -44,18 +37,23 @@ const trainerSlice = createSlice({
     setDevice(state, action: PayloadAction<TrainerDeviceInfo | undefined>) {
       state.device = action.payload;
     },
-    pushPowerSample(state, action: PayloadAction<PowerMeasurement>) {
-      state.latestPower = action.payload;
-      state.recentPower = appendAndTrimByTime(
-        state.recentPower,
-        action.payload,
-        MAX_RECENT_POWER_SAMPLES,
-        RECENT_POWER_WINDOW_MS
-      );
-      state.connectionState = 'connected';
-      state.error = undefined;
-      state.diagnostics.lastPacketTimestamp = action.payload.timestamp;
-      state.diagnostics.sampleCount += 1;
+    setEnvironment(state, action: PayloadAction<TrainerEnvironment>) {
+      state.environment = action.payload;
+    },
+    setTrainerTopology(
+      state,
+      action: PayloadAction<DiscoveredBleTopology | undefined>
+    ) {
+      state.topology = action.payload;
+    },
+    setCapabilities(state, action: PayloadAction<TrainerCapabilities>) {
+      state.capabilities = action.payload;
+    },
+    setCapabilityStatuses(
+      state,
+      action: PayloadAction<TrainerCapabilityStatuses>
+    ) {
+      state.capabilityStatuses = action.payload;
     },
     setError(state, action: PayloadAction<string | undefined>) {
       state.error = action.payload;
@@ -64,30 +62,28 @@ const trainerSlice = createSlice({
         state.connectionState = 'error';
       }
     },
-    setEnvironment(state, action: PayloadAction<TrainerEnvironment>) {
-      state.environment = action.payload;
+    setDegradedDuringRide(state, action: PayloadAction<boolean>) {
+      state.degradedDuringRide = action.payload;
     },
-    resetConnection(state) {
-      state.connectionState = 'idle';
-      state.error = undefined;
-      resetLiveState(state);
-    },
-    handleUnexpectedDisconnect(state, action: PayloadAction<string | undefined>) {
-      state.connectionState = 'idle';
-      state.error = action.payload;
-      resetLiveState(state);
+    resetTrainerSession(state) {
+      return {
+        ...initialState,
+        environment: state.environment,
+      };
     },
   },
 });
 
 export const {
-  handleUnexpectedDisconnect,
-  pushPowerSample,
-  resetConnection,
+  resetTrainerSession,
+  setCapabilities,
+  setCapabilityStatuses,
   setConnectionState,
+  setDegradedDuringRide,
   setDevice,
   setEnvironment,
   setError,
+  setTrainerTopology,
 } = trainerSlice.actions;
 
 export default trainerSlice.reducer;

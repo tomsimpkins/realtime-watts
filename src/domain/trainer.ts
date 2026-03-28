@@ -10,6 +10,20 @@ export type MeasurementSource = 'cps' | 'simulation';
 
 export type TrainerMode = 'ble' | 'simulate';
 
+export type Capability =
+  | 'power'
+  | 'cadence'
+  | 'speed'
+  | 'resistanceControl'
+  | 'ergMode'
+  | 'simulationMode';
+
+export type CapabilityStatus =
+  | 'unknown'
+  | 'checking'
+  | 'available'
+  | 'unavailable';
+
 export interface TrainerDeviceInfo {
   id?: string;
   name: string;
@@ -29,21 +43,65 @@ export interface TrainerEnvironment {
   supportMessage?: string;
 }
 
-export interface TrainerDiagnostics {
-  lastPacketTimestamp?: number;
-  sampleCount: number;
+export interface TrainerCapabilities {
+  power: boolean;
+  cadence: boolean;
+  speed: boolean;
+  resistanceControl: boolean;
+  ergMode: boolean;
+  simulationMode: boolean;
+}
+
+export interface TrainerCapabilityStatuses {
+  power: CapabilityStatus;
+  cadence: CapabilityStatus;
+  speed: CapabilityStatus;
+  resistanceControl: CapabilityStatus;
+  ergMode: CapabilityStatus;
+  simulationMode: CapabilityStatus;
+}
+
+export interface DiscoveredBleTopology {
+  serviceUuids: string[];
+  characteristicUuidsByService: Record<string, string[]>;
 }
 
 export interface TrainerState {
   connectionState: ConnectionState;
   device?: TrainerDeviceInfo;
-  latestPower?: PowerMeasurement;
-  recentPower: PowerMeasurement[];
   error?: string;
   environment: TrainerEnvironment;
-  diagnostics: TrainerDiagnostics;
+  topology?: DiscoveredBleTopology;
+  capabilities: TrainerCapabilities;
+  capabilityStatuses: TrainerCapabilityStatuses;
+  degradedDuringRide: boolean;
 }
 
 export interface ConnectedTrainer {
   device: TrainerDeviceInfo;
+  topology: DiscoveredBleTopology;
+}
+
+export function createEmptyCapabilities(): TrainerCapabilities {
+  return {
+    power: false,
+    cadence: false,
+    speed: false,
+    resistanceControl: false,
+    ergMode: false,
+    simulationMode: false,
+  };
+}
+
+export function createCapabilityStatuses(
+  status: CapabilityStatus
+): TrainerCapabilityStatuses {
+  return {
+    power: status,
+    cadence: status,
+    speed: status,
+    resistanceControl: status,
+    ergMode: status,
+    simulationMode: status,
+  };
 }

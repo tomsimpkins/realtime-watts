@@ -733,70 +733,252 @@ The task is complete when all of the following are true:
 
 ---
 
+## V2: Multi-Screen App Flow Specification
+
+### Overview
+
+Evolve the app from a single-screen telemetry view into a guided, multi-step single-page application with three primary screens:
+
+1. Connect (Trainer Setup)
+2. Workout Selection
+3. Ride (Workout Dashboard)
+
+Navigation should be state-driven and enforce progression through the flow.
+
+---
+
+## App Navigation Model
+
+### Routes
+
+* `/connect`
+* `/workouts`
+* `/ride`
+
+### Navigation Rules
+
+* User cannot access `/workouts` until trainer setup is successful
+* User cannot access `/ride` until a workout is selected
+* If trainer disconnects during ride, remain on `/ride` and show degraded state
+
+### App Flow State
+
+```ts
+export type AppScreen = 'connect' | 'workouts' | 'ride'
+```
+
+---
+
+## Screen 1: Trainer Setup (Connect)
+
+### Purpose
+
+* Establish BLE connection
+* Discover services and characteristics
+* Infer trainer capabilities
+* Present capabilities explicitly to the user
+
+### UI Sections
+
+1. Trainer Connection
+2. Detected Capabilities
+3. Primary Actions
+
+### Capability Model
+
+```ts
+export type Capability =
+  | 'power'
+  | 'cadence'
+  | 'speed'
+  | 'resistanceControl'
+  | 'ergMode'
+  | 'simulationMode'
+
+export type CapabilityStatus =
+  | 'unknown'
+  | 'checking'
+  | 'available'
+  | 'unavailable'
+
+export interface TrainerCapabilities {
+  power: boolean
+  cadence: boolean
+  speed: boolean
+  resistanceControl: boolean
+  ergMode: boolean
+  simulationMode: boolean
+}
+```
+
+### Behaviour
+
+* On connect, transition capabilities from `unknown` → `checking`
+* After service discovery, mark each capability
+* Minimum requirement to proceed: `power === true`
+
+### Visual States
+
+* Unknown: muted/grey
+* Checking: animated/amber
+* Available: green
+* Unavailable: dimmed
+
+### Actions
+
+* Connect Trainer
+* Retry Setup
+* Continue (enabled only when valid)
+
+---
+
+## Screen 2: Workout Selection
+
+### Purpose
+
+* Allow user to choose workout
+* Abstract away BLE details
+
+### Workout Options (v1)
+
+1. Free Ride
+2. 20 min x 2
+3. Tabata
+
+### Workout Model
+
+```ts
+export type WorkoutType = 'freeRide' | 'structured'
+
+export interface WorkoutDefinition {
+  id: string
+  name: string
+  type: WorkoutType
+  durationSeconds: number
+  description: string
+  blocks: WorkoutBlock[]
+}
+
+export interface WorkoutBlock {
+  id: string
+  label: string
+  durationSeconds: number
+  target?: {
+    kind: 'none' | 'ftpPercent' | 'watts'
+    value?: number
+  }
+}
+```
+
+### Behaviour
+
+* Selecting a workout sets active workout in state
+* Navigates to `/ride`
+
+---
+
+## Screen 3: Ride (Workout Dashboard)
+
+### Purpose
+
+* Display live metrics
+* Track workout progress
+* Provide session controls
+
+### UI Elements
+
+* Current workout name
+* Elapsed time
+* Current interval/block
+* Live power (primary)
+* Optional cadence
+* Recent power chart
+* Controls: pause, end
+
+### Removed Elements
+
+* No BLE connection controls
+* No device selection UI
+
+### Behaviour
+
+* Assumes active connection
+* Handles disconnect gracefully with overlay/banner
+
+---
+
+## State Architecture Updates
+
+### Trainer Slice
+
+* connection state
+* device info
+* capabilities
+
+### Workout Slice
+
+* selected workout
+* workout status
+* current block index
+
+### Metrics Slice
+
+* latest power
+* cadence
+* history buffer
+
+### App Slice
+
+* current screen
+
+---
+
+## Capability Resolution Layer
+
+Introduce a mapping layer:
+
+* BLE services/characteristics → capabilities
+
+Example:
+
+```ts
+function resolveCapabilities(services): TrainerCapabilities
+```
+
+This isolates BLE details from UI.
+
+---
+
+## UX Guidance
+
+### Navigation Style
+
+* Stepper or progress indicator preferred over generic tabs
+* Show progression: Connect → Workout → Ride
+
+### Color System
+
+* Green: available / healthy
+* Amber: in-progress
+* Grey: unknown
+* Red: error only
+
+---
+
+## Definition of Done (V2)
+
+* App supports 3-screen flow
+* Capability detection implemented and visualized
+* Workout selection implemented
+* Dashboard decoupled from connection UI
+* Navigation rules enforced
+* Redux slices updated to reflect new domains
+
+---
+
 ## Stretch Goals After v1
 
-Do not block v1 on these.
-
-### v1.1
-
-* short rolling power chart
-* 3-second and 10-second average power
-* cadence if available
-* reconnect UX improvements
-* remembered preferred device name for display purposes
-
-### v1.2
-
+* rolling averages
+* cadence display
 * FTMS support
-* ERG or resistance control
-* workout intervals
-* session recording and export
-
----
-
-## Build Instructions for the Agentic App
-
-1. Create a repository under the `tomsimpkins` GitHub account for this project
-2. Scaffold a React + TypeScript + Vite project using Bun for package management and local dev commands
-3. Add Redux Toolkit and React-Redux
-4. Add Mantine unless there is a deliberate choice to use shadcn/ui instead
-5. Configure GitHub Pages deployment with GitHub Actions as early as possible
-6. Implement Web Bluetooth support detection
-7. Implement BLE client for cycling power service connection
-8. Implement cycling power packet decoder
-9. Implement Redux store, slice, selectors, and async orchestration
-10. Build single-screen UI with connect button and live watt display
-11. Add disconnect handling
-12. Add parser unit tests
-13. Add optional mock mode for local UI development
-14. Document local hardware testing on `localhost` with Bun dev server and supported browsers
-
----
-
-## Implementation Guidance and Preferences
-
-* Prefer small, explicit modules over heavy abstraction
-* Keep protocol decoding independent from React
-* Keep BLE lifecycle and domain logic independent from React
-* Keep trainer-specific assumptions isolated to BLE and protocol files
-* Treat React as the view layer plus ephemeral UI state only
-* Use selectors so React components consume already-shaped view data
-* Avoid introducing a server
-* Avoid premature support for multiple trainer brands in the top-level UX
-* Prefer readable code over clever code
-
----
-
-## Open Questions to Resolve Only If Needed
-
-These should not block initial implementation.
-
-* Whether cadence is reliably available from the chosen characteristic for this device
-* Whether optional FTMS support should be included from the start as dormant code
-* Whether session history should use localStorage or IndexedDB
-
-If the agent must choose, prefer:
-
-* watts-only for v1
-* no FTMS implementation yet
-* localStorage for simple settings, no session persistence required initially
+* structured workout execution engine

@@ -1,5 +1,6 @@
 import type {
   ConnectedTrainer,
+  DiscoveredBleTopology,
   TrainerDeviceInfo,
   TrainerMode,
 } from '../domain/trainer';
@@ -16,7 +17,6 @@ type DisconnectCallback = () => void;
 export interface TrainerClient {
   requestDevice(): Promise<TrainerDeviceInfo>;
   connect(): Promise<ConnectedTrainer>;
-  requestAndConnect(): Promise<ConnectedTrainer>;
   reconnect(): Promise<ConnectedTrainer>;
   disconnect(): Promise<void>;
   onDisconnected(callback: DisconnectCallback): () => void;
@@ -40,6 +40,10 @@ function toDeviceInfo(device: Pick<BluetoothDevice, 'id' | 'name'>): TrainerDevi
     id: device.id || undefined,
     name: device.name || 'Unnamed trainer',
   };
+}
+
+function normalizeUuid(uuid: string): string {
+  return uuid.toLowerCase();
 }
 
 class WebBluetoothTrainerClient implements TrainerClient {
@@ -68,11 +72,6 @@ class WebBluetoothTrainerClient implements TrainerClient {
 
   async connect(): Promise<ConnectedTrainer> {
     return this.connectWithKnownDevice();
-  }
-
-  async requestAndConnect(): Promise<ConnectedTrainer> {
-    await this.requestDevice();
-    return this.connect();
   }
 
   async reconnect(): Promise<ConnectedTrainer> {
@@ -139,6 +138,7 @@ class WebBluetoothTrainerClient implements TrainerClient {
     const server = gatt.connected ? gatt : await gatt.connect();
     this.server = server;
 
+    const topology = await this.discoverTopology(server);
     const service = await server.getPrimaryService(CYCLING_POWER_SERVICE);
     const characteristic = await service.getCharacteristic(
       CYCLING_POWER_MEASUREMENT_CHARACTERISTIC
@@ -148,40 +148,37 @@ class WebBluetoothTrainerClient implements TrainerClient {
     await this.startPowerNotifications();
 
     if (import.meta.env.DEV) {
-      await this.logDiscovery(server, service);
+      logDebug('Discovered trainer topology', topology);
     }
-
-    logDebug('Connected to cycling power characteristic', {
-      characteristic: CYCLING_POWER_MEASUREMENT_CHARACTERISTIC,
-      service: CYCLING_POWER_SERVICE,
-    });
 
     return {
       device: toDeviceInfo(this.device),
+      topology,
     };
   }
 
-  private async logDiscovery(
-    server: BluetoothRemoteGATTServer,
-    service: BluetoothRemoteGATTService
-  ): Promise<void> {
-    try {
-      const services = await server.getPrimaryServices();
-      const characteristics = await service.getCharacteristics();
+  private async discoverTopology(
+    server: BluetoothRemoteGATTServer
+  ): Promise<DiscoveredBleTopology> {
+    const services = await server.getPrimaryServices();
+    const characteristicUuidsByService: Record<string, string[]> = {};
+    const serviceUuids: string[] = [];
 
-      logDebug(
-        'Discovered services',
-        services.map((discoveredService) => discoveredService.uuid)
-      );
-      logDebug(
-        'Discovered cycling power characteristics',
-        characteristics.map((discoveredCharacteristic) =>
-          discoveredCharacteristic.uuid
-        )
-      );
-    } catch (error) {
-      logDebug('Unable to inspect discovered services', error);
-    }
+    await Promise.all(
+      services.map(async (service) => {
+        const normalizedServiceUuid = normalizeUuid(service.uuid);
+        serviceUuids.push(normalizedServiceUuid);
+        const characteristics = await service.getCharacteristics();
+        characteristicUuidsByService[normalizedServiceUuid] = characteristics.map(
+          (characteristic) => normalizeUuid(characteristic.uuid)
+        );
+      })
+    );
+
+    return {
+      serviceUuids,
+      characteristicUuidsByService,
+    };
   }
 
   private async startPowerNotifications(): Promise<void> {
@@ -280,12 +277,13 @@ class MockTrainerClient implements TrainerClient {
 
     return {
       device: this.device,
+      topology: {
+        serviceUuids: [CYCLING_POWER_SERVICE],
+        characteristicUuidsByService: {
+          [CYCLING_POWER_SERVICE]: [CYCLING_POWER_MEASUREMENT_CHARACTERISTIC],
+        },
+      },
     };
-  }
-
-  async requestAndConnect(): Promise<ConnectedTrainer> {
-    await this.requestDevice();
-    return this.connect();
   }
 
   async reconnect(): Promise<ConnectedTrainer> {

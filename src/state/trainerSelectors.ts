@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import type { RootState } from '../app/store';
 
-const selectTrainerState = (state: RootState) => state.trainer;
+export const selectTrainerState = (state: RootState) => state.trainer;
 
 export const selectConnectionState = createSelector(
   [selectTrainerState],
@@ -19,67 +19,43 @@ export const selectDeviceName = createSelector(
   (device) => device?.name
 );
 
-export const selectLatestPower = createSelector(
-  [selectTrainerState],
-  (trainer) => trainer.latestPower
-);
-
-export const selectPowerDisplay = createSelector(
-  [selectLatestPower],
-  (latestPower) => (latestPower ? String(latestPower.watts) : '--')
-);
-
-export const selectRecentPower = createSelector(
-  [selectTrainerState],
-  (trainer) => trainer.recentPower
-);
-
-export const selectEnvironment = createSelector(
+export const selectTrainerEnvironment = createSelector(
   [selectTrainerState],
   (trainer) => trainer.environment
 );
 
-export const selectError = createSelector(
+export const selectTrainerError = createSelector(
   [selectTrainerState],
   (trainer) => trainer.error
 );
 
-export const selectAverageWatts10s = createSelector(
-  [selectRecentPower],
-  (recentPower) => {
-    if (!recentPower.length) {
-      return undefined;
-    }
-
-    const anchorTimestamp = recentPower[recentPower.length - 1].timestamp;
-    const cutoff = anchorTimestamp - 10_000;
-    const windowedSamples = recentPower.filter(
-      (sample) => sample.timestamp >= cutoff
-    );
-
-    if (!windowedSamples.length) {
-      return undefined;
-    }
-
-    const totalWatts = windowedSamples.reduce(
-      (sum, sample) => sum + sample.watts,
-      0
-    );
-
-    return Math.round(totalWatts / windowedSamples.length);
-  }
+export const selectTrainerCapabilities = createSelector(
+  [selectTrainerState],
+  (trainer) => trainer.capabilities
 );
 
-export const selectDiagnostics = createSelector(
-  [selectTrainerState, selectAverageWatts10s],
-  (trainer, averageWatts10s) => ({
-    averageWatts10s,
-    lastPacketTimestamp: trainer.diagnostics.lastPacketTimestamp,
-    sampleCount: trainer.diagnostics.sampleCount,
-  })
+export const selectTrainerCapabilityStatuses = createSelector(
+  [selectTrainerState],
+  (trainer) => trainer.capabilityStatuses
 );
 
-export const selectCanConnect = createSelector(
+export const selectTrainerTopology = createSelector(
+  [selectTrainerState],
+  (trainer) => trainer.topology
+);
+
+export const selectDegradedDuringRide = createSelector(
+  [selectTrainerState],
+  (trainer) => trainer.degradedDuringRide
+);
+
+export const selectIsTrainerReady = createSelector(
+  [selectConnectionState, selectTrainerCapabilities],
+  (connectionState, capabilities) =>
+    connectionState === 'connected' && capabilities.power
+);
+
+export const selectCanStartSetup = createSelector(
   [selectTrainerState],
   (trainer) => {
     const isBusy =
@@ -87,7 +63,7 @@ export const selectCanConnect = createSelector(
       trainer.connectionState === 'connecting' ||
       trainer.connectionState === 'disconnecting';
 
-    if (isBusy || trainer.connectionState === 'connected') {
+    if (isBusy) {
       return false;
     }
 
@@ -102,12 +78,7 @@ export const selectCanConnect = createSelector(
   }
 );
 
-export const selectCanDisconnect = createSelector(
-  [selectConnectionState],
-  (connectionState) => connectionState === 'connected'
-);
-
-export const selectCanReconnect = createSelector(
+export const selectCanRetrySetup = createSelector(
   [selectTrainerState],
   (trainer) => {
     const isBusy =
@@ -115,46 +86,53 @@ export const selectCanReconnect = createSelector(
       trainer.connectionState === 'connecting' ||
       trainer.connectionState === 'disconnecting';
 
-    return Boolean(trainer.device) && !isBusy && trainer.connectionState !== 'connected';
+    return !isBusy && (trainer.environment.mode === 'simulate' || Boolean(trainer.device));
   }
 );
 
-export const selectStatusBannerModel = createSelector(
-  [selectTrainerState],
-  (trainer) => {
-    if (trainer.error) {
+export const selectCanContinueFromConnect = selectIsTrainerReady;
+
+export const selectConnectStatusBannerModel = createSelector(
+  [
+    selectConnectionState,
+    selectDeviceName,
+    selectTrainerEnvironment,
+    selectTrainerError,
+  ],
+  (connectionState, deviceName, environment, error) => {
+    if (error) {
       return {
         color: 'red',
-        description: trainer.error,
+        description: error,
         label: 'Error',
       };
     }
 
-    switch (trainer.connectionState) {
+    switch (connectionState) {
       case 'requesting':
         return {
-          color: 'blue',
+          color: 'yellow',
           description:
-            trainer.environment.mode === 'simulate'
+            environment.mode === 'simulate'
               ? 'Preparing the simulated trainer stream.'
-              : 'Choose your trainer from the Bluetooth device picker.',
-          label: trainer.environment.mode === 'simulate' ? 'Starting Demo' : 'Choose Trainer',
+              : 'Choose your trainer from the Bluetooth picker.',
+          label: environment.mode === 'simulate' ? 'Starting Demo' : 'Choose Trainer',
         };
       case 'connecting':
         return {
-          color: 'blue',
-          description: trainer.device
-            ? `Connecting to ${trainer.device.name}.`
+          color: 'yellow',
+          description: deviceName
+            ? `Checking services and capabilities for ${deviceName}.`
             : 'Connecting to the selected trainer.',
-          label: 'Connecting',
+          label: 'Checking Trainer',
         };
       case 'connected':
         return {
-          color: 'teal',
-          description: trainer.device
-            ? `Live power is streaming from ${trainer.device.name}.`
-            : 'Live power is streaming from the trainer.',
-          label: 'Connected',
+          color: 'green',
+          description: deviceName
+            ? `${deviceName} is ready for workout selection.`
+            : 'Trainer is connected and ready.',
+          label: 'Setup Complete',
         };
       case 'disconnecting':
         return {
@@ -163,21 +141,36 @@ export const selectStatusBannerModel = createSelector(
           label: 'Disconnecting',
         };
       default:
-        if (trainer.device) {
-          return {
-            color: 'gray',
-            description: `Ready to reconnect to ${trainer.device.name}.`,
-            label: 'Disconnected',
-          };
-        }
-
         return {
-          color: trainer.environment.mode === 'simulate' ? 'violet' : 'gray',
+          color: environment.mode === 'simulate' ? 'violet' : 'gray',
           description:
-            trainer.environment.supportMessage ??
-            'Press Connect Trainer to start streaming wattage.',
-          label: trainer.environment.mode === 'simulate' ? 'Simulation Ready' : 'Ready',
+            environment.supportMessage ??
+            'Connect a trainer to inspect capabilities and continue.',
+          label: environment.mode === 'simulate' ? 'Simulation Ready' : 'Ready',
         };
     }
+  }
+);
+
+export const selectRideBannerModel = createSelector(
+  [selectDegradedDuringRide, selectTrainerError],
+  (degradedDuringRide, error) => {
+    if (degradedDuringRide) {
+      return {
+        color: 'red',
+        description: 'Trainer disconnected. Live telemetry is unavailable.',
+        label: 'Degraded Ride',
+      };
+    }
+
+    if (error) {
+      return {
+        color: 'red',
+        description: error,
+        label: 'Error',
+      };
+    }
+
+    return undefined;
   }
 );

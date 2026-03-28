@@ -1,11 +1,11 @@
 import { Paper, Stack, Text } from '@mantine/core';
 
 interface PowerDisplayProps {
-  deviceName?: string;
+  subtitle?: string;
   wattsDisplay: string;
 }
 
-export function PowerDisplay({ deviceName, wattsDisplay }: PowerDisplayProps) {
+export function PowerDisplay({ subtitle, wattsDisplay }: PowerDisplayProps) {
   return (
     <Paper className="power-display" p="xl" radius="xl" withBorder>
       <Stack align="center" gap="xs">
@@ -18,11 +18,11 @@ export function PowerDisplay({ deviceName, wattsDisplay }: PowerDisplayProps) {
         <Text c="dimmed" size="xl">
           Watts
         </Text>
-        <Text c="dimmed" size="sm">
-          {deviceName
-            ? `Streaming from ${deviceName}`
-            : 'Waiting for a trainer connection.'}
-        </Text>
+        {subtitle ? (
+          <Text c="dimmed" size="sm">
+            {subtitle}
+          </Text>
+        ) : null}
       </Stack>
     </Paper>
   );

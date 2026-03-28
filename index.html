@@ -8,6 +8,25 @@
       content="Realtime trainer wattage dashboard using React, Bun, Vite, and Web Bluetooth."
     />
     <title>Realtime Watts</title>
+    <script>
+      (function () {
+        const search = new URLSearchParams(window.location.search);
+        const redirectedPath = search.get('p');
+
+        if (!redirectedPath) {
+          return;
+        }
+
+        const basePath = window.location.pathname.replace(/\/$/, '');
+        const restoredPath = `${basePath}${decodeURIComponent(redirectedPath)}`;
+
+        search.delete('p');
+        const remainingQuery = search.toString();
+        const nextUrl = `${restoredPath}${remainingQuery ? `?${remainingQuery}` : ''}`;
+
+        window.history.replaceState(null, '', nextUrl);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

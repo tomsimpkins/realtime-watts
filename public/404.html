@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Realtime Watts</title>
+    <script>
+      (function () {
+        const pathSegments = window.location.pathname.split('/').filter(Boolean);
+        const basePath = pathSegments.length ? `/${pathSegments[0]}` : '';
+        const nestedPath = window.location.pathname.slice(basePath.length) || '/';
+        const redirectTarget = `${window.location.origin}${basePath}/?p=${encodeURIComponent(
+          nestedPath + window.location.search + window.location.hash
+        )}`;
+
+        window.location.replace(redirectTarget);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
