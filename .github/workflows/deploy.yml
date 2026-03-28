@@ -21,13 +21,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PAGES_ENABLEMENT_TOKEN: ${{ secrets.PAGES_ENABLEMENT_TOKEN }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
       - name: Explain Pages enablement requirements
-        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN == '' }}
+        if: ${{ env.PAGES_ENABLEMENT_TOKEN == '' }}
         run: |
           echo 'PAGES_ENABLEMENT_TOKEN is not configured.'
           echo 'This workflow expects GitHub Pages to already be enabled for GitHub Actions in repository settings.'
@@ -36,8 +38,8 @@ jobs:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
-          enablement: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' }}
-          token: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' && secrets.PAGES_ENABLEMENT_TOKEN || github.token }}
+          enablement: ${{ env.PAGES_ENABLEMENT_TOKEN != '' }}
+          token: ${{ env.PAGES_ENABLEMENT_TOKEN != '' && env.PAGES_ENABLEMENT_TOKEN || github.token }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
