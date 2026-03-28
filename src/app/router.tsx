@@ -33,9 +33,10 @@ function AppLayout() {
           </Text>
         </header>
         <FlowStepper
-          connectComplete={flowStepper.connectComplete}
+          activeStep={flowStepper.activeStep}
           currentScreen={flowStepper.currentScreen}
-          workoutComplete={flowStepper.workoutComplete}
+          rideUnlocked={flowStepper.rideUnlocked}
+          workoutsUnlocked={flowStepper.workoutsUnlocked}
         />
         <Outlet />
       </Stack>

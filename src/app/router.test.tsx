@@ -13,14 +13,17 @@ vi.mock('../components/PowerChart', () => ({
 }));
 
 describe('app routing and screens', () => {
-  it('keeps Continue disabled until power capability is available', () => {
+  it('shows connect as the primary action until power capability is available', () => {
     const notReady = renderWithProviders(
       <MemoryRouter>
         <ConnectScreen />
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    expect(screen.getByText('Trainer Setup')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connect Trainer' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Detected Capabilities')).not.toBeInTheDocument();
     notReady.unmount();
 
     renderWithProviders(
@@ -31,6 +34,7 @@ describe('app routing and screens', () => {
         preloadedState: {
           trainer: {
             connectionState: 'connected',
+            device: { id: 'trainer-1', name: 'Kickr' },
             capabilities: {
               power: true,
               cadence: false,
@@ -45,6 +49,27 @@ describe('app routing and screens', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Connect Trainer' })).not.toBeInTheDocument();
+  });
+
+  it('hides diagnostics by default and shows them when enabled by query param', () => {
+    const hidden = renderWithProviders(
+      <MemoryRouter initialEntries={['/connect']}>
+        <AppRoutes />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByText('Diagnostics')).not.toBeInTheDocument();
+    hidden.unmount();
+
+    renderWithProviders(
+      <MemoryRouter initialEntries={['/connect?diagnostics=1']}>
+        <AppRoutes />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Diagnostics')).toBeInTheDocument();
   });
 
   it('redirects /workouts back to /connect when trainer setup is invalid', () => {
@@ -54,8 +79,55 @@ describe('app routing and screens', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Trainer Connection')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    expect(screen.getByText('Trainer Setup')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connect Trainer' })).toBeInTheDocument();
+  });
+
+  it('locks future workflow steps until prerequisites are met', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <MemoryRouter initialEntries={['/connect']}>
+        <AppRoutes />
+      </MemoryRouter>
+    );
+
+    await user.click(screen.getByTestId('workflow-step-workouts'));
+
+    expect(screen.getByText('Trainer Setup')).toBeInTheDocument();
+    expect(screen.queryByText('Choose a Workout')).not.toBeInTheDocument();
+  });
+
+  it('allows navigating with unlocked workflow steps', async () => {
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <MemoryRouter initialEntries={['/connect']}>
+        <AppRoutes />
+      </MemoryRouter>,
+      {
+        preloadedState: {
+          trainer: {
+            connectionState: 'connected',
+            device: { id: 'trainer-1', name: 'Kickr' },
+            capabilities: {
+              power: true,
+              cadence: false,
+              speed: false,
+              resistanceControl: false,
+              ergMode: false,
+              simulationMode: false,
+            },
+          },
+        },
+      }
+    );
+
+    await user.click(screen.getByTestId('workflow-step-workouts'));
+    expect(await screen.findByText('Choose a Workout')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('workflow-step-connect'));
+    expect(await screen.findByText('Trainer Setup')).toBeInTheDocument();
   });
 
   it('navigates from workout selection to the ride screen', async () => {
@@ -114,7 +186,7 @@ describe('app routing and screens', () => {
       }
     );
 
-    expect(screen.queryByText('Trainer Connection')).not.toBeInTheDocument();
+    expect(screen.queryByText('Trainer Setup')).not.toBeInTheDocument();
     expect(
       screen.getByText('Trainer disconnected. Live telemetry is unavailable.')
     ).toBeInTheDocument();

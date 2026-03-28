@@ -1,77 +1,104 @@
-import { Text, ThemeIcon } from '@mantine/core';
+import { Stepper } from '@mantine/core';
 import { IconCheck, IconCircleDot } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 
 import type { AppScreen } from '../state/appSlice';
 
 interface FlowStepperProps {
-  connectComplete: boolean;
+  activeStep: number;
   currentScreen: AppScreen;
-  workoutComplete: boolean;
+  rideUnlocked: boolean;
+  workoutsUnlocked: boolean;
 }
 
 interface StepConfig {
   description: string;
   key: AppScreen;
   label: string;
+  path: string;
 }
 
 const STEPS: StepConfig[] = [
   {
     key: 'connect',
     label: 'Connect',
-    description: 'Trainer setup and capability detection',
+    description: 'Trainer setup',
+    path: '/connect',
   },
   {
     key: 'workouts',
     label: 'Workout',
     description: 'Choose a workout',
+    path: '/workouts',
   },
   {
     key: 'ride',
     label: 'Ride',
-    description: 'Live telemetry and timing',
+    description: 'Live metrics',
+    path: '/ride',
   },
 ];
 
-function getStepState(
-  step: StepConfig,
-  props: FlowStepperProps
-): 'complete' | 'active' | 'upcoming' {
-  if (step.key === 'connect' && props.connectComplete) {
-    return 'complete';
-  }
+export function FlowStepper({
+  activeStep,
+  currentScreen,
+  rideUnlocked,
+  workoutsUnlocked,
+}: FlowStepperProps) {
+  const navigate = useNavigate();
 
-  if (step.key === 'workouts' && props.workoutComplete) {
-    return 'complete';
-  }
+  const selectableSteps: Record<AppScreen, boolean> = {
+    connect: true,
+    workouts: workoutsUnlocked,
+    ride: rideUnlocked,
+  };
 
-  if (step.key === props.currentScreen) {
-    return 'active';
-  }
+  const handleStepClick = (stepIndex: number) => {
+    const step = STEPS[stepIndex];
 
-  return 'upcoming';
-}
+    if (!step || !selectableSteps[step.key]) {
+      return;
+    }
 
-export function FlowStepper(props: FlowStepperProps) {
+    if (step.key !== currentScreen) {
+      navigate(step.path);
+    }
+  };
+
   return (
-    <div className="stepper">
+    <Stepper
+      active={activeStep}
+      classNames={{
+        root: 'workflow-stepper',
+        separator: 'workflow-stepper__separator',
+        step: 'workflow-stepper__step',
+        stepBody: 'workflow-stepper__body',
+        stepDescription: 'workflow-stepper__description',
+        stepIcon: 'workflow-stepper__icon',
+        stepLabel: 'workflow-stepper__label',
+        steps: 'workflow-stepper__steps',
+      }}
+      color="accent"
+      completedIcon={<IconCheck size={16} stroke={2.6} />}
+      iconSize={34}
+      onStepClick={handleStepClick}
+      size="sm"
+    >
       {STEPS.map((step) => {
-        const state = getStepState(step, props);
-        const iconColor =
-          state === 'complete' ? 'ember' : state === 'active' ? 'accent' : 'dark';
+        const canSelect = selectableSteps[step.key];
 
         return (
-          <div className={`stepper-item stepper-item--${state}`} key={step.key}>
-            <ThemeIcon color={iconColor} radius="xl" size="lg" variant="light">
-              {state === 'complete' ? <IconCheck size={18} /> : <IconCircleDot size={18} />}
-            </ThemeIcon>
-            <div className="stepper-copy">
-              <Text className="stepper-title">{step.label}</Text>
-              <Text className="stepper-description">{step.description}</Text>
-            </div>
-          </div>
+          <Stepper.Step
+            allowStepClick={canSelect}
+            allowStepSelect={canSelect}
+            data-testid={`workflow-step-${step.key}`}
+            description={step.description}
+            icon={<IconCircleDot size={14} stroke={2.4} />}
+            key={step.key}
+            label={step.label}
+          />
         );
       })}
-    </div>
+    </Stepper>
   );
 }

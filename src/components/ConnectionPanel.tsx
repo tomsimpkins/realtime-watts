@@ -1,34 +1,167 @@
-import { Paper, Stack, Text } from '@mantine/core';
+import { Badge, Button, Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
+import {
+  IconAlertCircle,
+  IconBluetooth,
+  IconBolt,
+  IconPlugConnected,
+} from '@tabler/icons-react';
 
-import type { TrainerMode } from '../domain/trainer';
+import { CapabilitiesPanel } from './CapabilitiesPanel';
+import type { TrainerCapabilityStatuses } from '../domain/trainer';
+import type { ConnectSetupModel } from '../state/trainerSelectors';
 
 interface ConnectionPanelProps {
-  deviceName?: string;
-  mode: TrainerMode;
+  onConnect: () => void;
+  onContinue: () => void;
+  onRetry: () => void;
+  setup: ConnectSetupModel;
+  statuses: TrainerCapabilityStatuses;
 }
 
-export function ConnectionPanel({ deviceName, mode }: ConnectionPanelProps) {
+function getStatusIcon(tone: ConnectSetupModel['readinessTone']) {
+  switch (tone) {
+    case 'ready':
+      return IconPlugConnected;
+    case 'checking':
+      return IconBluetooth;
+    case 'attention':
+      return IconAlertCircle;
+    default:
+      return IconBolt;
+  }
+}
+
+function getStatusIconColor(tone: ConnectSetupModel['readinessTone']) {
+  switch (tone) {
+    case 'ready':
+      return 'accent';
+    case 'checking':
+    case 'attention':
+      return 'ember';
+    default:
+      return 'dark';
+  }
+}
+
+function getPrimaryActionLabel(setup: ConnectSetupModel) {
+  switch (setup.showPrimaryAction) {
+    case 'continue':
+      return 'Continue';
+    case 'connecting':
+      return 'Connecting…';
+    case 'retry':
+      return 'Retry Setup';
+    default:
+      return 'Connect Trainer';
+  }
+}
+
+function getPrimaryActionHandler(
+  setup: ConnectSetupModel,
+  onConnect: () => void,
+  onContinue: () => void,
+  onRetry: () => void
+) {
+  switch (setup.showPrimaryAction) {
+    case 'continue':
+      return onContinue;
+    case 'retry':
+      return onRetry;
+    default:
+      return onConnect;
+  }
+}
+
+function getPrimaryActionDisabled(setup: ConnectSetupModel) {
+  switch (setup.showPrimaryAction) {
+    case 'continue':
+      return !setup.canContinue;
+    case 'connecting':
+      return true;
+    case 'retry':
+      return !setup.canReconnect;
+    default:
+      return !setup.canConnect;
+  }
+}
+
+function getSecondaryActionLabel(setup: ConnectSetupModel) {
+  switch (setup.showSecondaryAction) {
+    case 'reconnect':
+      return 'Reconnect';
+    case 'retry':
+      return 'Retry Setup';
+    default:
+      return null;
+  }
+}
+
+export function ConnectionPanel({
+  onConnect,
+  onContinue,
+  onRetry,
+  setup,
+  statuses,
+}: ConnectionPanelProps) {
+  const StatusIcon = getStatusIcon(setup.readinessTone);
+  const secondaryActionLabel = getSecondaryActionLabel(setup);
+
   return (
     <Paper className="panel" p="xl" radius="32px">
       <Stack gap="lg">
-        <div>
-          <Text className="section-title">Trainer Connection</Text>
+        <Group align="flex-start" justify="space-between">
+          <Text className="section-title">Trainer Setup</Text>
+          <Badge className={`setup-badge setup-badge--${setup.readinessTone}`} radius="xl" variant="light">
+            {setup.readinessLabel}
+          </Badge>
+        </Group>
+
+        <div className={`connection-status connection-status--${setup.readinessTone}`}>
+          <ThemeIcon
+            className="connection-status__icon"
+            color={getStatusIconColor(setup.readinessTone)}
+            radius="xl"
+            size={44}
+            variant="light"
+          >
+            <StatusIcon size={20} stroke={2.2} />
+          </ThemeIcon>
+          <div className="connection-status__copy">
+            <Text className="connection-status__label">{setup.readinessLabel}</Text>
+            <Text className="section-copy">{setup.readinessMessage}</Text>
+          </div>
         </div>
 
-        <div className="data-grid">
-          <div className="data-chip data-chip--accent">
-            <Text className="data-chip__label">Mode</Text>
-            <Text className="data-chip__value">
-              {mode === 'simulate' ? 'Simulation' : 'Web Bluetooth'}
-            </Text>
+        <Group className="action-row connection-actions">
+          <Button
+            className="button-primary"
+            disabled={getPrimaryActionDisabled(setup)}
+            onClick={getPrimaryActionHandler(setup, onConnect, onContinue, onRetry)}
+          >
+            {getPrimaryActionLabel(setup)}
+          </Button>
+          {secondaryActionLabel ? (
+            <Button className="button-quiet" disabled={!setup.canReconnect} onClick={onRetry}>
+              {secondaryActionLabel}
+            </Button>
+          ) : null}
+        </Group>
+
+        <Stack gap="sm">
+          <Text className="setup-section-label">Device</Text>
+          <div className="data-grid data-grid--single">
+            <div className="data-chip data-chip--accent">
+              <Text className="data-chip__value">
+                {setup.deviceName ?? 'No trainer selected yet'}
+              </Text>
+            </div>
           </div>
-          <div className="data-chip">
-            <Text className="data-chip__label">Device</Text>
-            <Text className="data-chip__value">
-              {deviceName ?? 'No trainer selected yet'}
-            </Text>
-          </div>
-        </div>
+        </Stack>
+
+        <Stack gap="sm">
+          <Text className="setup-section-label">Capabilities</Text>
+          <CapabilitiesPanel statuses={statuses} />
+        </Stack>
       </Stack>
     </Paper>
   );

@@ -2,6 +2,18 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import type { RootState } from '../app/store';
 
+export interface ConnectSetupModel {
+  canConnect: boolean;
+  canContinue: boolean;
+  canReconnect: boolean;
+  deviceName?: string;
+  readinessLabel: string;
+  readinessMessage: string;
+  readinessTone: 'ready' | 'checking' | 'attention' | 'idle';
+  showPrimaryAction: 'connect' | 'continue' | 'connecting' | 'retry';
+  showSecondaryAction?: 'reconnect' | 'retry';
+}
+
 export const selectTrainerState = (state: RootState) => state.trainer;
 
 export const selectConnectionState = createSelector(
@@ -92,63 +104,106 @@ export const selectCanRetrySetup = createSelector(
 
 export const selectCanContinueFromConnect = selectIsTrainerReady;
 
-export const selectConnectStatusBannerModel = createSelector(
+export const selectConnectSetupModel = createSelector(
   [
     selectConnectionState,
     selectDeviceName,
     selectTrainerEnvironment,
     selectTrainerError,
+    selectIsTrainerReady,
+    selectCanStartSetup,
+    selectCanRetrySetup,
+    selectTrainerCapabilities,
   ],
-  (connectionState, deviceName, environment, error) => {
-    if (error) {
+  (
+    connectionState,
+    deviceName,
+    environment,
+    error,
+    isTrainerReady,
+    canStartSetup,
+    canRetrySetup,
+    capabilities
+  ): ConnectSetupModel => {
+    const isBusy =
+      connectionState === 'requesting' ||
+      connectionState === 'connecting' ||
+      connectionState === 'disconnecting';
+
+    if (isTrainerReady) {
       return {
-        color: 'red',
-        description: error,
-        label: 'Error',
+        canConnect: canStartSetup,
+        canContinue: true,
+        canReconnect: canRetrySetup,
+        deviceName,
+        readinessLabel: 'Ready',
+        readinessMessage: deviceName
+          ? `${deviceName} is ready for workout selection.`
+          : 'Trainer is ready for workout selection.',
+        readinessTone: 'ready',
+        showPrimaryAction: 'continue',
+        showSecondaryAction: canRetrySetup ? 'reconnect' : undefined,
       };
     }
 
-    switch (connectionState) {
-      case 'requesting':
-        return {
-          color: 'yellow',
-          description:
-            environment.mode === 'simulate'
-              ? 'Preparing the simulated trainer stream.'
-              : 'Choose your trainer from the Bluetooth picker.',
-          label: environment.mode === 'simulate' ? 'Starting Demo' : 'Choose Trainer',
-        };
-      case 'connecting':
-        return {
-          color: 'yellow',
-          description: deviceName
-            ? `Checking services and capabilities for ${deviceName}.`
-            : 'Connecting to the selected trainer.',
-          label: 'Checking Trainer',
-        };
-      case 'connected':
-        return {
-          color: 'green',
-          description: deviceName
-            ? `${deviceName} is ready for workout selection.`
-            : 'Trainer is connected and ready.',
-          label: 'Setup Complete',
-        };
-      case 'disconnecting':
-        return {
-          color: 'yellow',
-          description: 'Disconnecting from the current trainer.',
-          label: 'Disconnecting',
-        };
-      default:
-        return {
-          color: environment.mode === 'simulate' ? 'violet' : 'gray',
-          description:
-            environment.supportMessage ??
-            'Connect a trainer to inspect capabilities and continue.',
-          label: environment.mode === 'simulate' ? 'Simulation Ready' : 'Ready',
-        };
+    if (isBusy) {
+      return {
+        canConnect: false,
+        canContinue: false,
+        canReconnect: false,
+        deviceName,
+        readinessLabel: 'Checking trainer',
+        readinessMessage:
+          connectionState === 'requesting'
+            ? environment.mode === 'simulate'
+              ? 'Starting the demo trainer.'
+              : 'Choose your trainer to continue.'
+            : 'Checking device readiness and supported features.',
+        readinessTone: 'checking',
+        showPrimaryAction: 'connecting',
+      };
     }
+
+    if (error) {
+      return {
+        canConnect: canStartSetup,
+        canContinue: false,
+        canReconnect: canRetrySetup,
+        deviceName,
+        readinessLabel: 'Needs attention',
+        readinessMessage: error,
+        readinessTone: 'attention',
+        showPrimaryAction: canRetrySetup ? 'retry' : 'connect',
+      };
+    }
+
+    if (connectionState === 'connected' && !capabilities.power) {
+      return {
+        canConnect: canStartSetup,
+        canContinue: false,
+        canReconnect: canRetrySetup,
+        deviceName,
+        readinessLabel: 'Needs attention',
+        readinessMessage: 'Trainer connected, but power support is unavailable.',
+        readinessTone: 'attention',
+        showPrimaryAction: canRetrySetup ? 'retry' : 'connect',
+      };
+    }
+
+    return {
+      canConnect: canStartSetup,
+      canContinue: false,
+      canReconnect: false,
+      deviceName,
+      readinessLabel: 'Not connected',
+      readinessMessage:
+        environment.supportMessage ??
+        (deviceName
+          ? `Reconnect to ${deviceName} or connect a trainer to continue.`
+          : 'Connect a trainer to continue.'),
+      readinessTone: canStartSetup ? 'idle' : 'attention',
+      showPrimaryAction: 'connect',
+    };
   }
 );
 

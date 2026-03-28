@@ -22,12 +22,19 @@ export const selectCanAccessRide = createSelector(
   }
 );
 
+const STEP_INDEX_BY_SCREEN: Record<AppScreen, number> = {
+  connect: 0,
+  workouts: 1,
+  ride: 2,
+};
+
 export const selectFlowStepperModel = createSelector(
-  [selectCurrentScreen, selectIsTrainerReady, selectSelectedWorkoutId],
-  (currentScreen, isTrainerReady, selectedWorkoutId) => ({
-    connectComplete: isTrainerReady,
+  [selectCurrentScreen, selectCanAccessWorkouts, selectCanAccessRide],
+  (currentScreen, canAccessWorkouts, canAccessRide) => ({
+    activeStep: STEP_INDEX_BY_SCREEN[currentScreen],
     currentScreen,
-    workoutComplete: Boolean(selectedWorkoutId),
+    rideUnlocked: currentScreen === 'ride' || canAccessRide,
+    workoutsUnlocked: currentScreen === 'workouts' || canAccessWorkouts,
   })
 );
 
