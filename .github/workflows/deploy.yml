@@ -1,5 +1,8 @@
 name: Deploy to GitHub Pages
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
@@ -21,10 +24,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Explain Pages enablement requirements
+        if: ${{ secrets.PAGES_ENABLEMENT_TOKEN == '' }}
+        run: |
+          echo 'PAGES_ENABLEMENT_TOKEN is not configured.'
+          echo 'This workflow expects GitHub Pages to already be enabled for GitHub Actions in repository settings.'
+          echo 'Alternatively, add a PAT secret named PAGES_ENABLEMENT_TOKEN to let actions/configure-pages enable Pages automatically.'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' }}
+          token: ${{ secrets.PAGES_ENABLEMENT_TOKEN != '' && secrets.PAGES_ENABLEMENT_TOKEN || github.token }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
