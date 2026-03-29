@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-import { useAppDispatch } from './app/hooks';
-import { AppRouter } from './app/router';
-import { refreshTrainerEnvironment } from './state/trainerThunks';
+import { useAppDispatch } from "./app/hooks";
+import { AppRouter } from "./app/router";
+import { refreshTrainerEnvironment } from "./state/trainerThunks";
 
 export default function App() {
-  const dispatch = useAppDispatch();
+	const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    dispatch(refreshTrainerEnvironment());
-  }, [dispatch]);
+	useEffect(() => {
+		dispatch(refreshTrainerEnvironment());
+	}, [dispatch]);
 
-  return <AppRouter />;
+	return <AppRouter />;
 }

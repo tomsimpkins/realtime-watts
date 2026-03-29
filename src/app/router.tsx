@@ -1,91 +1,98 @@
-import { Container, Stack, Text, Title } from '@mantine/core';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-
-import { useAppSelector } from './hooks';
-import { RouteStateSynchronizer } from './RouteStateSynchronizer';
-import { FlowStepper } from '../components/FlowStepper';
-import { ConnectScreen } from '../screens/ConnectScreen';
-import { RideScreen } from '../screens/RideScreen';
-import { WorkoutSelectionScreen } from '../screens/WorkoutSelectionScreen';
+import { Container, Stack, Text, Title } from "@mantine/core";
 import {
-  selectCanAccessRide,
-  selectCanAccessWorkouts,
-  selectFlowStepperModel,
-} from '../state/appSelectors';
+	BrowserRouter,
+	Navigate,
+	Outlet,
+	Route,
+	Routes,
+} from "react-router-dom";
+
+import { useAppSelector } from "./hooks";
+import { RouteStateSynchronizer } from "./RouteStateSynchronizer";
+import { FlowStepper } from "../components/FlowStepper";
+import { ConnectScreen } from "../screens/ConnectScreen";
+import { RideScreen } from "../screens/RideScreen";
+import { WorkoutSelectionScreen } from "../screens/WorkoutSelectionScreen";
+import {
+	selectCanAccessRide,
+	selectCanAccessWorkouts,
+	selectFlowStepperModel,
+} from "../state/appSelectors";
 
 function getRouterBasename() {
-  const baseUrl = import.meta.env.BASE_URL ?? '/';
-  return baseUrl === '/' ? '/' : baseUrl.replace(/\/$/, '');
+	const baseUrl = import.meta.env.BASE_URL ?? "/";
+	return baseUrl === "/" ? "/" : baseUrl.replace(/\/$/, "");
 }
 
 function AppLayout() {
-  const flowStepper = useAppSelector(selectFlowStepperModel);
+	const flowStepper = useAppSelector(selectFlowStepperModel);
 
-  return (
-    <Container className="app-shell" py="xl" size="lg">
-      <Stack gap="lg">
-        <header className="app-header">
-          <Title className="app-title" order={1}>
-            Realtime Watts
-          </Title>
-          <Text className="app-subtitle">
-            Guided smart trainer workflow for setup, workout selection, and ride telemetry.
-          </Text>
-        </header>
-        <FlowStepper
-          activeStep={flowStepper.activeStep}
-          currentScreen={flowStepper.currentScreen}
-          rideUnlocked={flowStepper.rideUnlocked}
-          workoutsUnlocked={flowStepper.workoutsUnlocked}
-        />
-        <Outlet />
-      </Stack>
-    </Container>
-  );
+	return (
+		<Container className="app-shell" py="xl" size="lg">
+			<Stack gap="lg">
+				<header className="app-header">
+					<Title className="app-title" order={1}>
+						Realtime Watts
+					</Title>
+					<Text className="app-subtitle">
+						Guided smart trainer workflow for setup, workout selection, and ride
+						telemetry.
+					</Text>
+				</header>
+				<FlowStepper
+					activeStep={flowStepper.activeStep}
+					currentScreen={flowStepper.currentScreen}
+					rideUnlocked={flowStepper.rideUnlocked}
+					workoutsUnlocked={flowStepper.workoutsUnlocked}
+				/>
+				<Outlet />
+			</Stack>
+		</Container>
+	);
 }
 
 function RequireWorkoutsAccess() {
-  const canAccessWorkouts = useAppSelector(selectCanAccessWorkouts);
+	const canAccessWorkouts = useAppSelector(selectCanAccessWorkouts);
 
-  return canAccessWorkouts ? <Outlet /> : <Navigate replace to="/connect" />;
+	return canAccessWorkouts ? <Outlet /> : <Navigate replace to="/connect" />;
 }
 
 function RequireRideAccess() {
-  const canAccessRide = useAppSelector(selectCanAccessRide);
-  const canAccessWorkouts = useAppSelector(selectCanAccessWorkouts);
+	const canAccessRide = useAppSelector(selectCanAccessRide);
+	const canAccessWorkouts = useAppSelector(selectCanAccessWorkouts);
 
-  if (canAccessRide) {
-    return <Outlet />;
-  }
+	if (canAccessRide) {
+		return <Outlet />;
+	}
 
-  return <Navigate replace to={canAccessWorkouts ? '/workouts' : '/connect'} />;
+	return <Navigate replace to={canAccessWorkouts ? "/workouts" : "/connect"} />;
 }
 
 export function AppRoutes() {
-  return (
-    <>
-      <RouteStateSynchronizer />
-      <Routes>
-        <Route element={<AppLayout />} path="/">
-          <Route element={<Navigate replace to="/connect" />} index />
-          <Route element={<ConnectScreen />} path="connect" />
-          <Route element={<RequireWorkoutsAccess />}>
-            <Route element={<WorkoutSelectionScreen />} path="workouts" />
-          </Route>
-          <Route element={<RequireRideAccess />}>
-            <Route element={<RideScreen />} path="ride" />
-          </Route>
-          <Route element={<Navigate replace to="/connect" />} path="*" />
-        </Route>
-      </Routes>
-    </>
-  );
+	return (
+		<>
+			<RouteStateSynchronizer />
+			<Routes>
+				<Route element={<AppLayout />} path="/">
+					<Route element={<Navigate replace to="/connect" />} index />
+					<Route element={<ConnectScreen />} path="connect" />
+					<Route element={<RequireWorkoutsAccess />}>
+						<Route element={<WorkoutSelectionScreen />} path="workouts" />
+					</Route>
+					<Route element={<RequireRideAccess />}>
+						<Route element={<RideScreen />} path="ride" />
+					</Route>
+					<Route element={<Navigate replace to="/connect" />} path="*" />
+				</Route>
+			</Routes>
+		</>
+	);
 }
 
 export function AppRouter() {
-  return (
-    <BrowserRouter basename={getRouterBasename()}>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+	return (
+		<BrowserRouter basename={getRouterBasename()}>
+			<AppRoutes />
+		</BrowserRouter>
+	);
 }
