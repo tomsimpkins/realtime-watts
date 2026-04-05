@@ -3,10 +3,7 @@ import {
 	createTrainerConnection,
 	type TrainerConnection,
 } from "../ble/FTMSClient";
-import {
-	createCheckingCapabilityResolution,
-	resolveCapabilities,
-} from "../ble/capabilityResolver";
+import { createCheckingCapabilityResolution } from "../ble/capabilityResolver";
 import type { TrainerEnvironment } from "../domain/trainer";
 import { getTrainerEnvironment } from "../utils/environment";
 import { getUserFacingError, logDebug, logError } from "../utils/errors";
@@ -115,10 +112,6 @@ async function completeTrainerConnection(
 	connectMethod: "connect" | "reconnect",
 ) {
 	const connectedTrainer = await client[connectMethod]();
-	const capabilityResolution = resolveCapabilities({
-		mode,
-		topology: connectedTrainer.topology,
-	});
 
 	bindClientListeners(client, dispatch, getState);
 
@@ -131,8 +124,8 @@ async function completeTrainerConnection(
 
 	dispatch(setDevice(connectedTrainer.device));
 	dispatch(setTrainerTopology(connectedTrainer.topology));
-	dispatch(setCapabilities(capabilityResolution.capabilities));
-	dispatch(setCapabilityStatuses(capabilityResolution.statuses));
+	dispatch(setCapabilities(connectedTrainer.capabilities));
+	dispatch(setCapabilityStatuses(connectedTrainer.capabilityStatuses));
 	dispatch(setConnectionState("connected"));
 	dispatch(setError(undefined));
 	dispatch(setDegradedDuringRide(false));

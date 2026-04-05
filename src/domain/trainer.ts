@@ -82,6 +82,8 @@ export interface TrainerState {
 export interface ConnectedTrainer {
 	device: TrainerDeviceInfo;
 	topology: DiscoveredBleTopology;
+	capabilities: TrainerCapabilities;
+	capabilityStatuses: TrainerCapabilityStatuses;
 }
 
 export function createEmptyCapabilities(): TrainerCapabilities {
