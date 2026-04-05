@@ -1,4 +1,4 @@
-import { logDebug } from "../utils/errors";
+import { logDebug } from "../../utils/errors";
 
 const FTMS_CONTROL_OP_REQUEST_CONTROL = 0x00;
 const FTMS_CONTROL_OP_RESET = 0x01;

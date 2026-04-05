@@ -9,7 +9,7 @@ import {
 	YAxis,
 } from "recharts";
 
-import type { PowerHistogramBin } from "../state/metricsSelectors";
+import type { PowerHistogramBin } from "../../state/selectors/metricsSelectors";
 
 interface PowerChartProps {
 	bins: PowerHistogramBin[];

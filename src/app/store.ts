@@ -5,10 +5,10 @@ import {
 } from "@reduxjs/toolkit";
 import type { ThunkAction } from "redux-thunk";
 
-import appReducer from "../state/appSlice";
-import metricsReducer from "../state/metricsSlice";
-import trainerReducer from "../state/trainerSlice";
-import workoutReducer from "../state/workoutSlice";
+import appReducer from "../adapters/state/appSlice";
+import metricsReducer from "../adapters/state/metricsSlice";
+import trainerReducer from "../adapters/state/trainerSlice";
+import workoutReducer from "../adapters/state/workoutSlice";
 import { listenerMiddleware } from "./listenerMiddleware";
 
 const rootReducer = combineReducers({

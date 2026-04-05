@@ -1,8 +1,8 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import type { RootState } from "../app/store";
-import type { WorkoutBlock } from "../domain/workout";
-import { WORKOUT_CATALOG, WORKOUTS_BY_ID } from "../workouts/catalog";
+import type { RootState } from "../../../app/store";
+import type { WorkoutBlock } from "../../../domain/workout";
+import { WORKOUT_CATALOG, WORKOUTS_BY_ID } from "../../../workouts/catalog";
 
 const DEFAULT_FTP_WATTS = 250;
 

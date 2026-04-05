@@ -4,11 +4,11 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { AppRoutes } from "./router";
-import { ConnectScreen } from "../screens/ConnectScreen";
-import { RideScreen } from "../screens/RideScreen";
+import { ConnectScreen } from "../adapters/ui/screens/ConnectScreen";
+import { RideScreen } from "../adapters/ui/screens/RideScreen";
 import { renderWithProviders } from "../test/testUtils";
 
-vi.mock("../components/PowerChart", () => ({
+vi.mock("../adapters/ui/components/PowerChart", () => ({
 	PowerChart: () => <div>Mock Power Chart</div>,
 }));
 

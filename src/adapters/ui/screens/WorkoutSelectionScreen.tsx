@@ -1,10 +1,10 @@
 import { Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { beginWorkoutSession } from "../state/trainerThunks";
-import { selectDeviceName } from "../state/trainerSelectors";
-import { WORKOUT_CATALOG } from "../workouts/catalog";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
+import { beginWorkoutSession } from "../../state/trainerThunks";
+import { selectDeviceName } from "../../state/selectors/trainerSelectors";
+import { WORKOUT_CATALOG } from "../../../workouts/catalog";
 
 function formatDuration(seconds: number) {
 	if (seconds === 0) {

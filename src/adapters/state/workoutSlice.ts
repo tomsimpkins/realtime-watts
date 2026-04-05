@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import type { WorkoutStatus } from "../domain/workout";
-import type { WorkoutSessionSnapshot } from "../domain/workoutEngine";
+import type { WorkoutStatus } from "../../domain/workout";
+import type { WorkoutSessionSnapshot } from "../../domain/workoutEngine";
 
 export interface WorkoutState {
 	selectedWorkoutId?: string;

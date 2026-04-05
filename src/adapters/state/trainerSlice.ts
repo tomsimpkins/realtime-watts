@@ -8,12 +8,12 @@ import type {
 	TrainerDeviceInfo,
 	TrainerEnvironment,
 	TrainerState,
-} from "../domain/trainer";
+} from "../../domain/trainer";
 import {
 	createCapabilityStatuses,
 	createEmptyCapabilities,
-} from "../domain/trainer";
-import { getTrainerEnvironment } from "../utils/environment";
+} from "../../domain/trainer";
+import { getTrainerEnvironment } from "../../utils/environment";
 
 const initialState: TrainerState = {
 	connectionState: "idle",

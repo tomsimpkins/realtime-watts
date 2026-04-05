@@ -1,20 +1,20 @@
 import { Stack } from "@mantine/core";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { ConnectionPanel } from "../components/ConnectionPanel";
 import { DiagnosticsPanel } from "../components/DiagnosticsPanel";
 import {
 	selectConnectSetupModel,
 	selectTrainerCapabilityStatuses,
 	selectTrainerEnvironment,
-} from "../state/trainerSelectors";
+} from "../../state/selectors/trainerSelectors";
 import {
 	connectTrainer,
 	refreshTrainerEnvironment,
 	retryTrainerSetup,
-} from "../state/trainerThunks";
-import { selectDiagnostics } from "../state/metricsSelectors";
+} from "../../state/trainerThunks";
+import { selectDiagnostics } from "../../state/selectors/metricsSelectors";
 
 export function ConnectScreen() {
 	const dispatch = useAppDispatch();

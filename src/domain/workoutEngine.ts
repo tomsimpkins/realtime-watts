@@ -1,14 +1,12 @@
 import type { PowerMeasurement } from "./trainer";
 import type { WorkoutBlock, WorkoutDefinition, WorkoutStatus } from "./workout";
-import type {
-	CyclingPowerCrankData,
-	CyclingPowerWheelData,
-} from "../protocol/cyclingPower";
 import {
+	type CrankRevolutionData,
 	estimateCadenceRpm,
 	estimateDistanceKm,
 	estimateSpeedKph,
-} from "../protocol/cyclingPower";
+	type WheelRevolutionData,
+} from "./telemetry";
 import { appendAndTrimByTime } from "../utils/ringBuffer";
 
 const MAX_RECENT_POWER_SAMPLES = 240;
@@ -30,13 +28,13 @@ export type WorkoutTelemetryEvent = {
 	type: "workout.telemetry";
 	payload: {
 		cadenceRpm?: number;
-		crankRevolutionData?: CyclingPowerCrankData;
+		crankRevolutionData?: CrankRevolutionData;
 		distanceKm?: number;
 		source: PowerMeasurement["source"];
 		speedKph?: number;
 		timestampMs: number;
 		watts: number;
-		wheelRevolutionData?: CyclingPowerWheelData;
+		wheelRevolutionData?: WheelRevolutionData;
 	};
 };
 
@@ -169,12 +167,12 @@ export class WorkoutEngine {
 	private readonly workoutSnapshotListeners = new Set<
 		(snapshot: WorkoutSessionSnapshot) => void
 	>();
-	private initialWheelData: CyclingPowerWheelData | undefined;
+	private initialWheelData: WheelRevolutionData | undefined;
 	private lastControlIntentKey: string | undefined;
 	private previousCadenceRpm: number | undefined;
-	private previousCrankData: CyclingPowerCrankData | undefined;
+	private previousCrankData: CrankRevolutionData | undefined;
 	private previousSpeedKph: number | undefined;
-	private previousWheelData: CyclingPowerWheelData | undefined;
+	private previousWheelData: WheelRevolutionData | undefined;
 	private workoutDefinition: WorkoutDefinition | undefined;
 	private workoutSnapshot: WorkoutSessionSnapshot = {
 		...initialWorkoutSnapshot,

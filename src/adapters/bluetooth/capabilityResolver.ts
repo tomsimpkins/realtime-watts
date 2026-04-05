@@ -3,11 +3,11 @@ import type {
 	TrainerCapabilities,
 	TrainerCapabilityStatuses,
 	TrainerMode,
-} from "../domain/trainer";
+} from "../../domain/trainer";
 import {
 	createCapabilityStatuses,
 	createEmptyCapabilities,
-} from "../domain/trainer";
+} from "../../domain/trainer";
 import {
 	FITNESS_MACHINE_CONTROL_CHARACTERISTIC_UUIDS,
 	FITNESS_MACHINE_FEATURE_CHARACTERISTIC_UUIDS,
@@ -65,10 +65,10 @@ export function resolveCapabilities({
 	}
 
 	const serviceUuids = topology.serviceUuids.map(normalizeUuid);
-	const allCharacteristicUuids = Object.values(
+	const allCharacteristicUuids = (Object.values(
 		topology.characteristicUuidsByService,
 	)
-		.flat()
+		.flat() as string[])
 		.map(normalizeUuid);
 
 	const hasFtmsService = includesAny(

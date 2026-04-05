@@ -1,9 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import type { PowerMeasurement } from "../domain/trainer";
+import type { PowerMeasurement } from "../../domain/trainer";
 import type {
 	WorkoutMetricsSnapshot,
-} from "../domain/workoutEngine";
+} from "../../domain/workoutEngine";
 
 export type MetricsState = WorkoutMetricsSnapshot;
 

@@ -6,7 +6,7 @@ export type ConnectionState =
 	| "disconnecting"
 	| "error";
 
-export type MeasurementSource = "cps" | "ftms" | "simulation";
+export type MeasurementSource = "ftms" | "simulation";
 
 export type TrainerMode = "bluetooth" | "simulate";
 

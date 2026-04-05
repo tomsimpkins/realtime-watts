@@ -9,15 +9,15 @@ import {
 
 import { useAppSelector } from "./hooks";
 import { RouteStateSynchronizer } from "./RouteStateSynchronizer";
-import { FlowStepper } from "../components/FlowStepper";
-import { ConnectScreen } from "../screens/ConnectScreen";
-import { RideScreen } from "../screens/RideScreen";
-import { WorkoutSelectionScreen } from "../screens/WorkoutSelectionScreen";
+import { FlowStepper } from "../adapters/ui/components/FlowStepper";
+import { ConnectScreen } from "../adapters/ui/screens/ConnectScreen";
+import { RideScreen } from "../adapters/ui/screens/RideScreen";
+import { WorkoutSelectionScreen } from "../adapters/ui/screens/WorkoutSelectionScreen";
 import {
 	selectCanAccessRide,
 	selectCanAccessWorkouts,
 	selectFlowStepperModel,
-} from "../state/appSelectors";
+} from "../adapters/state/selectors/appSelectors";
 
 function getRouterBasename() {
 	const baseUrl = import.meta.env.BASE_URL ?? "/";

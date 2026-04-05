@@ -2,7 +2,7 @@ import { Badge, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import { PowerDisplay } from "../components/PowerDisplay";
 import { RideStatsDisplay } from "../components/RideStatsDisplay";
 import { StatusBanner } from "../components/StatusBanner";
@@ -12,21 +12,21 @@ import {
 	selectPowerDisplay,
 	selectRecentPowerHistogram,
 	selectSpeedDisplay,
-} from "../state/metricsSelectors";
+} from "../../state/selectors/metricsSelectors";
 import {
 	endWorkoutSession,
 	pauseWorkoutSession,
 	resumeWorkoutSession,
 	retryTrainerConnection,
-} from "../state/trainerThunks";
-import { selectRideBannerModel } from "../state/trainerSelectors";
+} from "../../state/trainerThunks";
+import { selectRideBannerModel } from "../../state/selectors/trainerSelectors";
 import {
 	selectCanEndWorkout,
 	selectCanPauseWorkout,
 	selectCanResumeWorkout,
 	selectCurrentBlockRemainingLabel,
 	selectWorkoutSummary,
-} from "../state/workoutSelectors";
+} from "../../state/selectors/workoutSelectors";
 
 const PowerChart = lazy(() =>
 	import("../components/PowerChart").then((module) => ({

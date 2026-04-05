@@ -2,7 +2,7 @@ import { Stepper } from "@mantine/core";
 import { IconCheck, IconCircleDot } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 
-import type { AppScreen } from "../state/appSlice";
+import type { AppScreen } from "../../state/appSlice";
 
 interface FlowStepperProps {
 	activeStep: number;

@@ -12,18 +12,18 @@ import {
 	WorkoutEngine,
 } from "../domain/workoutEngine";
 import { logDebug } from "../utils/errors";
-import { resolveCapabilities } from "../bluetooth/capabilityResolver";
+import { resolveCapabilities } from "../adapters/bluetooth/capabilityResolver";
 import {
 	type FTMSDevice,
 	type BikeDataSource,
-} from "../bluetooth/FTMSDevice";
-import { FTMSDevice as ConnectedFTMSDevice } from "../bluetooth/FTMSDevice";
-import { FTMSControlAdapter } from "../bluetooth/FTMSControlAdapter";
-import type { IndoorBikeData } from "../bluetooth/FTMSTelemetryDecoder";
+} from "../adapters/bluetooth/FTMSDevice";
+import { FTMSDevice as ConnectedFTMSDevice } from "../adapters/bluetooth/FTMSDevice";
+import { FTMSControlAdapter } from "../adapters/bluetooth/FTMSControlAdapter";
+import type { IndoorBikeData } from "../adapters/bluetooth/FTMSTelemetryDecoder";
 import {
 	FITNESS_MACHINE_INDOOR_BIKE_DATA_CHARACTERISTIC,
 	FITNESS_MACHINE_SERVICE,
-} from "../bluetooth/uuids";
+} from "../adapters/bluetooth/uuids";
 
 type DisconnectCallback = () => void;
 type MetricsSnapshotCallback = (snapshot: WorkoutMetricsSnapshot) => void;
@@ -514,8 +514,8 @@ class MockTrainerConnection extends EngineBackedTrainerConnection {
 	}
 }
 
-export const ftmsManager = new TrainerSession();
-
 export function createTrainerConnection(mode: TrainerMode): TrainerConnection {
-	return mode === "simulate" ? new MockTrainerConnection() : ftmsManager;
+	return mode === "simulate"
+		? new MockTrainerConnection()
+		: new TrainerSession();
 }

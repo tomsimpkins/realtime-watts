@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestStore, createTestState } from "../test/testUtils";
+import { createTestStore, createTestState } from "../../test/testUtils";
 import {
 	selectCurrentBlockIndex,
 	selectCurrentBlockRemainingLabel,
 	selectCurrentBlockRemainingSeconds,
 	selectCurrentTargetLabel,
 	selectElapsedSeconds,
-} from "./workoutSelectors";
+} from "./selectors/workoutSelectors";
 import workoutReducer, {
 	clearWorkout,
 	setWorkoutSnapshot,

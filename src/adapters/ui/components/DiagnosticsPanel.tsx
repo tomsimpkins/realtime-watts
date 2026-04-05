@@ -1,6 +1,6 @@
 import { Paper, Text } from "@mantine/core";
 
-import type { TrainerMode } from "../domain/trainer";
+import type { TrainerMode } from "../../../domain/trainer";
 
 interface DiagnosticsPanelProps {
 	averageWatts10s?: number;

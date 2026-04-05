@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestState } from "../test/testUtils";
+import { createTestState } from "../../../test/testUtils";
 import { selectRecentPowerHistogram } from "./metricsSelectors";
 
 describe("metricsSelectors", () => {

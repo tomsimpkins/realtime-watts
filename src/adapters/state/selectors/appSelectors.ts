@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import type { RootState } from "../app/store";
-import type { AppScreen } from "./appSlice";
+import type { RootState } from "../../../app/store";
+import type { AppScreen } from "../appSlice";
 import {
 	selectDegradedDuringRide,
 	selectIsTrainerReady,

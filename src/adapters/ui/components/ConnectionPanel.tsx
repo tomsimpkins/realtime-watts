@@ -15,9 +15,8 @@ import {
 } from "@tabler/icons-react";
 
 import { CapabilitiesPanel } from "./CapabilitiesPanel";
-import type { TrainerCapabilityStatuses } from "../domain/trainer";
-import type { ConnectSetupModel } from "../state/trainerSelectors";
-import { ftmsManager } from "../bluetooth/FTMSClient";
+import type { TrainerCapabilityStatuses } from "../../../domain/trainer";
+import type { ConnectSetupModel } from "../../state/selectors/trainerSelectors";
 
 interface ConnectionPanelProps {
 	onConnect: () => void;
@@ -105,14 +104,6 @@ function getSecondaryActionLabel(setup: ConnectSetupModel) {
 	}
 }
 
-const testBluetooth = async () => {
-	await ftmsManager.requestDevice();
-	await ftmsManager.connect();
-	const device = ftmsManager.device!;
-	const features = await device.readCapabilities();
-	console.log(features);
-};
-
 export function ConnectionPanel({
 	onConnect,
 	onContinue,
@@ -126,8 +117,6 @@ export function ConnectionPanel({
 	return (
 		<Paper className="panel" p="xl" radius="32px">
 			<Stack gap="lg">
-				<Button onClick={testBluetooth}>Test!</Button>
-
 				<Group align="flex-start" justify="space-between">
 					<Text className="section-title">Trainer Setup</Text>
 				</Group>

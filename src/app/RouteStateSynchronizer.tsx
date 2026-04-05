@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 import { useAppDispatch } from "./hooks";
-import { getScreenFromPath } from "../state/appSelectors";
-import { setCurrentScreen } from "../state/appSlice";
+import { getScreenFromPath } from "../adapters/state/selectors/appSelectors";
+import { setCurrentScreen } from "../adapters/state/appSlice";
 
 export function RouteStateSynchronizer() {
 	const dispatch = useAppDispatch();

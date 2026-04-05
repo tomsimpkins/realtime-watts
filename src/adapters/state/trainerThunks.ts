@@ -1,12 +1,12 @@
-import type { AppDispatch, AppThunk, RootState } from "../app/store";
+import type { AppDispatch, AppThunk, RootState } from "../../app/store";
 import {
 	createTrainerConnection,
 	type TrainerConnection,
-} from "../bluetooth/FTMSClient";
+} from "../../application/TrainerSession";
 import { createCheckingCapabilityResolution } from "../bluetooth/capabilityResolver";
-import type { TrainerEnvironment } from "../domain/trainer";
-import { getTrainerEnvironment } from "../utils/environment";
-import { getUserFacingError, logDebug, logError } from "../utils/errors";
+import type { TrainerEnvironment } from "../../domain/trainer";
+import { getTrainerEnvironment } from "../../utils/environment";
+import { getUserFacingError, logDebug, logError } from "../../utils/errors";
 import { resetMetrics, setMetricsSnapshot } from "./metricsSlice";
 import {
 	resetTrainerSession,
@@ -20,7 +20,7 @@ import {
 	setTrainerTopology,
 } from "./trainerSlice";
 import { clearWorkout, setWorkoutSnapshot } from "./workoutSlice";
-import { WORKOUTS_BY_ID } from "../workouts/catalog";
+import { WORKOUTS_BY_ID } from "../../workouts/catalog";
 
 let activeClient: TrainerConnection | null = null;
 let unsubscribeMetricsSnapshot: (() => void) | undefined;

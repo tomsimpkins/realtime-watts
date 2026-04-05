@@ -8,7 +8,7 @@ import {
 	IconRun,
 } from "@tabler/icons-react";
 
-import type { Capability, TrainerCapabilityStatuses } from "../domain/trainer";
+import type { Capability, TrainerCapabilityStatuses } from "../../../domain/trainer";
 
 interface CapabilitiesPanelProps {
 	statuses: TrainerCapabilityStatuses;
