@@ -514,7 +514,7 @@ class MockTrainerSession extends BaseTrainerSession {
 	}
 }
 
-export function createTrainerConnection(mode: TrainerMode): TrainerSessionApi {
+export function createTrainerSession(mode: TrainerMode): TrainerSessionApi {
 	return mode === "simulate"
 		? new MockTrainerSession()
 		: new TrainerSession();

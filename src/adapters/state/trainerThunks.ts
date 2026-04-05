@@ -1,6 +1,6 @@
 import type { AppDispatch, AppThunk, RootState } from "../../app/store";
 import {
-	createTrainerConnection,
+	createTrainerSession,
 	type TrainerSessionApi,
 } from "../../application/TrainerSession";
 import { createCheckingCapabilityResolution } from "../bluetooth/capabilityResolver";
@@ -103,7 +103,7 @@ function ensureEnvironmentReady(
 	return true;
 }
 
-async function completeTrainerConnection(
+async function completeTrainerSessionSetup(
 	trainerSession: TrainerSessionApi,
 	dispatch: AppDispatch,
 	getState: () => RootState,
@@ -154,14 +154,14 @@ export const connectTrainer =
 		dispatch(setConnectionState("requesting"));
 
 		await disposeActiveTrainerSession();
-		const trainerSession = createTrainerConnection(environment.mode);
+		const trainerSession = createTrainerSession(environment.mode);
 		activeTrainerSession = trainerSession;
 
 		try {
 			const device = await trainerSession.requestDevice();
 			dispatch(setDevice(device));
 			dispatch(setConnectionState("connecting"));
-			await completeTrainerConnection(
+			await completeTrainerSessionSetup(
 				trainerSession,
 				dispatch,
 				getState,
@@ -203,7 +203,7 @@ export const retryTrainerSetup =
 		dispatch(setConnectionState("connecting"));
 
 		try {
-			await completeTrainerConnection(
+			await completeTrainerSessionSetup(
 				activeTrainerSession,
 				dispatch,
 				getState,
@@ -217,7 +217,7 @@ export const retryTrainerSetup =
 		}
 	};
 
-export const retryTrainerConnection =
+export const retryTrainerSession =
 	(): AppThunk<Promise<void>> => async (dispatch, getState) => {
 		const environment = getTrainerEnvironment();
 
@@ -237,7 +237,7 @@ export const retryTrainerConnection =
 		dispatch(setConnectionState("connecting"));
 
 		try {
-			await completeTrainerConnection(
+			await completeTrainerSessionSetup(
 				activeTrainerSession,
 				dispatch,
 				getState,

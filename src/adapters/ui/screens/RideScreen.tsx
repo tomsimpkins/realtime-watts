@@ -17,7 +17,7 @@ import {
 	endWorkoutSession,
 	pauseWorkoutSession,
 	resumeWorkoutSession,
-	retryTrainerConnection,
+	retryTrainerSession,
 } from "../../state/trainerThunks";
 import { selectRideBannerModel } from "../../state/selectors/trainerSelectors";
 import {
@@ -160,7 +160,7 @@ export function RideScreen() {
 					<Button
 						className="button-primary"
 						onClick={() => {
-							void dispatch(retryTrainerConnection());
+							void dispatch(retryTrainerSession());
 						}}
 					>
 						Retry Trainer
