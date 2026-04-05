@@ -31,7 +31,7 @@ export function isSecureBluetoothContext(): boolean {
 }
 
 function getTrainerMode(): TrainerMode {
-	return isSimulationModeEnabled() ? "simulate" : "ble";
+	return isSimulationModeEnabled() ? "simulate" : "bluetooth";
 }
 
 export function getTrainerEnvironment(): TrainerEnvironment {

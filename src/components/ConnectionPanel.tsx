@@ -17,7 +17,7 @@ import {
 import { CapabilitiesPanel } from "./CapabilitiesPanel";
 import type { TrainerCapabilityStatuses } from "../domain/trainer";
 import type { ConnectSetupModel } from "../state/trainerSelectors";
-import { ftmsManager } from "../ble/FTMSClient";
+import { ftmsManager } from "../bluetooth/FTMSClient";
 
 interface ConnectionPanelProps {
 	onConnect: () => void;

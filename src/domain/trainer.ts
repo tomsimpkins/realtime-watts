@@ -8,7 +8,7 @@ export type ConnectionState =
 
 export type MeasurementSource = "cps" | "ftms" | "simulation";
 
-export type TrainerMode = "ble" | "simulate";
+export type TrainerMode = "bluetooth" | "simulate";
 
 export type Capability =
 	| "power"
@@ -63,7 +63,7 @@ export interface TrainerCapabilityStatuses {
 	simulationMode: CapabilityStatus;
 }
 
-export interface DiscoveredBleTopology {
+export interface DiscoveredBluetoothTopology {
 	serviceUuids: string[];
 	characteristicUuidsByService: Record<string, string[]>;
 }
@@ -73,7 +73,7 @@ export interface TrainerState {
 	device?: TrainerDeviceInfo;
 	error?: string;
 	environment: TrainerEnvironment;
-	topology?: DiscoveredBleTopology;
+	topology?: DiscoveredBluetoothTopology;
 	capabilities: TrainerCapabilities;
 	capabilityStatuses: TrainerCapabilityStatuses;
 	degradedDuringRide: boolean;
@@ -81,7 +81,7 @@ export interface TrainerState {
 
 export interface ConnectedTrainer {
 	device: TrainerDeviceInfo;
-	topology: DiscoveredBleTopology;
+	topology: DiscoveredBluetoothTopology;
 	capabilities: TrainerCapabilities;
 	capabilityStatuses: TrainerCapabilityStatuses;
 }

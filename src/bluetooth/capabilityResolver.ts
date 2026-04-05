@@ -1,5 +1,5 @@
 import type {
-	DiscoveredBleTopology,
+	DiscoveredBluetoothTopology,
 	TrainerCapabilities,
 	TrainerCapabilityStatuses,
 	TrainerMode,
@@ -16,7 +16,7 @@ import {
 
 export interface ResolveCapabilitiesInput {
 	mode: TrainerMode;
-	topology?: DiscoveredBleTopology;
+	topology?: DiscoveredBluetoothTopology;
 }
 
 export interface CapabilityResolutionResult {

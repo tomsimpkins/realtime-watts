@@ -2,8 +2,8 @@ import type { AppDispatch, AppThunk, RootState } from "../app/store";
 import {
 	createTrainerConnection,
 	type TrainerConnection,
-} from "../ble/FTMSClient";
-import { createCheckingCapabilityResolution } from "../ble/capabilityResolver";
+} from "../bluetooth/FTMSClient";
+import { createCheckingCapabilityResolution } from "../bluetooth/capabilityResolver";
 import type { TrainerEnvironment } from "../domain/trainer";
 import { getTrainerEnvironment } from "../utils/environment";
 import { getUserFacingError, logDebug, logError } from "../utils/errors";

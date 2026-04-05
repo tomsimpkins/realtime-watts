@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type {
 	ConnectionState,
-	DiscoveredBleTopology,
+	DiscoveredBluetoothTopology,
 	TrainerCapabilities,
 	TrainerCapabilityStatuses,
 	TrainerDeviceInfo,
@@ -42,7 +42,7 @@ const trainerSlice = createSlice({
 		},
 		setTrainerTopology(
 			state,
-			action: PayloadAction<DiscoveredBleTopology | undefined>,
+			action: PayloadAction<DiscoveredBluetoothTopology | undefined>,
 		) {
 			state.topology = action.payload;
 		},

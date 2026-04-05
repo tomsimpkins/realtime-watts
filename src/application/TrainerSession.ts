@@ -1,32 +1,32 @@
 import type {
 	ConnectedTrainer,
-	DiscoveredBleTopology,
+	DiscoveredBluetoothTopology,
 	TrainerDeviceInfo,
 	TrainerMode,
 } from "../domain/trainer";
 import type { WorkoutDefinition } from "../domain/workout";
 import {
 	type WorkoutControlIntent,
+	type WorkoutMetricsSnapshot,
 	type WorkoutSessionSnapshot,
 	WorkoutEngine,
 } from "../domain/workoutEngine";
-import type { MetricsState } from "../state/metricsSlice";
 import { logDebug } from "../utils/errors";
-import { resolveCapabilities } from "./capabilityResolver";
+import { resolveCapabilities } from "../bluetooth/capabilityResolver";
 import {
 	type FTMSDevice,
 	type BikeDataSource,
-} from "./FTMSDevice";
-import { FTMSDevice as ConnectedFTMSDevice } from "./FTMSDevice";
-import { FTMSControlAdapter } from "./FTMSControlAdapter";
-import type { IndoorBikeData } from "./FTMSTelemetryDecoder";
+} from "../bluetooth/FTMSDevice";
+import { FTMSDevice as ConnectedFTMSDevice } from "../bluetooth/FTMSDevice";
+import { FTMSControlAdapter } from "../bluetooth/FTMSControlAdapter";
+import type { IndoorBikeData } from "../bluetooth/FTMSTelemetryDecoder";
 import {
 	FITNESS_MACHINE_INDOOR_BIKE_DATA_CHARACTERISTIC,
 	FITNESS_MACHINE_SERVICE,
-} from "./uuids";
+} from "../bluetooth/uuids";
 
 type DisconnectCallback = () => void;
-type MetricsSnapshotCallback = (snapshot: MetricsState) => void;
+type MetricsSnapshotCallback = (snapshot: WorkoutMetricsSnapshot) => void;
 type WorkoutSnapshotCallback = (snapshot: WorkoutSessionSnapshot) => void;
 type Unsubscribe = () => void;
 
@@ -35,7 +35,7 @@ export interface TrainerConnection {
 	connect(): Promise<ConnectedTrainer>;
 	reconnect(): Promise<ConnectedTrainer>;
 	disconnect(): Promise<void>;
-	getMetricsSnapshot(): MetricsState;
+	getMetricsSnapshot(): WorkoutMetricsSnapshot;
 	getWorkoutSnapshot(): WorkoutSessionSnapshot;
 	onDisconnected(callback: DisconnectCallback): Unsubscribe;
 	subscribeToMetricsSnapshot(callback: MetricsSnapshotCallback): Unsubscribe;
@@ -80,7 +80,7 @@ abstract class EngineBackedTrainerConnection implements TrainerConnection {
 	abstract reconnect(): Promise<ConnectedTrainer>;
 	abstract disconnect(): Promise<void>;
 
-	getMetricsSnapshot(): MetricsState {
+	getMetricsSnapshot(): WorkoutMetricsSnapshot {
 		return this.workoutEngine.getSnapshot();
 	}
 
@@ -259,7 +259,7 @@ export class TrainerSession extends EngineBackedTrainerConnection {
 		}
 
 		const capabilityResolution = resolveCapabilities({
-			mode: "ble",
+			mode: "bluetooth",
 			topology,
 		});
 
@@ -319,7 +319,7 @@ export class TrainerSession extends EngineBackedTrainerConnection {
 
 	private async discoverTopology(
 		server: BluetoothRemoteGATTServer,
-	): Promise<DiscoveredBleTopology> {
+	): Promise<DiscoveredBluetoothTopology> {
 		const services = await server.getPrimaryServices();
 		const characteristicUuidsByService: Record<string, string[]> = {};
 		const serviceUuids: string[] = [];

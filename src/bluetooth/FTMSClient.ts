@@ -3,4 +3,4 @@ export {
 	ftmsManager,
 	type TrainerConnection,
 	TrainerSession,
-} from "./TrainerSession";
+} from "../application/TrainerSession";

@@ -11,8 +11,8 @@ import {
 } from "./uuids";
 
 describe("resolveCapabilities", () => {
-	it("returns all unavailable when no topology is present for BLE mode", () => {
-		expect(resolveCapabilities({ mode: "ble" })).toEqual({
+	it("returns all unavailable when no topology is present for Bluetooth mode", () => {
+		expect(resolveCapabilities({ mode: "bluetooth" })).toEqual({
 			capabilities: {
 				power: false,
 				cadence: false,
@@ -45,7 +45,7 @@ describe("resolveCapabilities", () => {
 
 	it("marks telemetry as available for an FTMS feature topology", () => {
 		const result = resolveCapabilities({
-			mode: "ble",
+			mode: "bluetooth",
 			topology: {
 				serviceUuids: [FITNESS_MACHINE_SERVICE],
 				characteristicUuidsByService: {
@@ -66,7 +66,7 @@ describe("resolveCapabilities", () => {
 
 	it("marks control-oriented capabilities as available when FTMS is discovered", () => {
 		const result = resolveCapabilities({
-			mode: "ble",
+			mode: "bluetooth",
 			topology: {
 				serviceUuids: [FITNESS_MACHINE_SERVICE],
 				characteristicUuidsByService: {

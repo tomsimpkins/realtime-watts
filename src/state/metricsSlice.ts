@@ -1,15 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { PowerMeasurement } from "../domain/trainer";
+import type {
+	WorkoutMetricsSnapshot,
+} from "../domain/workoutEngine";
 
-export interface MetricsState {
-	latestPower?: PowerMeasurement;
-	recentPower: PowerMeasurement[];
-	diagnostics: {
-		lastPacketTimestamp?: number;
-		sampleCount: number;
-	};
-}
+export type MetricsState = WorkoutMetricsSnapshot;
 
 const initialState: MetricsState = {
 	recentPower: [],

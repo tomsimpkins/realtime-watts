@@ -9,7 +9,6 @@ import {
 	estimateDistanceKm,
 	estimateSpeedKph,
 } from "../protocol/cyclingPower";
-import type { MetricsState } from "../state/metricsSlice";
 import { appendAndTrimByTime } from "../utils/ringBuffer";
 
 const MAX_RECENT_POWER_SAMPLES = 240;
@@ -47,6 +46,15 @@ export interface WorkoutSessionSnapshot {
 	runningSinceMs?: number;
 	accumulatedElapsedMs: number;
 	completedAtMs?: number;
+}
+
+export interface WorkoutMetricsSnapshot {
+	latestPower?: PowerMeasurement;
+	recentPower: PowerMeasurement[];
+	diagnostics: {
+		lastPacketTimestamp?: number;
+		sampleCount: number;
+	};
 }
 
 type WorkoutSelectedEvent = {
@@ -99,7 +107,7 @@ type WorkoutEngineEvent =
 	| { type: "workout.reset" }
 	| { type: "workout.stream-idle" };
 
-const initialSnapshot: MetricsState = {
+const initialSnapshot: WorkoutMetricsSnapshot = {
 	latestPower: undefined,
 	recentPower: [],
 	diagnostics: {
@@ -113,7 +121,9 @@ const initialWorkoutSnapshot: WorkoutSessionSnapshot = {
 	accumulatedElapsedMs: 0,
 };
 
-function cloneSnapshot(snapshot: MetricsState): MetricsState {
+function cloneSnapshot(
+	snapshot: WorkoutMetricsSnapshot,
+): WorkoutMetricsSnapshot {
 	return {
 		latestPower: snapshot.latestPower,
 		recentPower: [...snapshot.recentPower],
@@ -152,7 +162,7 @@ function resolveTargetWatts(block?: WorkoutBlock): number | undefined {
 }
 
 export class WorkoutEngine {
-	private snapshot: MetricsState = cloneSnapshot(initialSnapshot);
+	private snapshot: WorkoutMetricsSnapshot = cloneSnapshot(initialSnapshot);
 	private readonly controlIntentListeners = new Set<
 		(intent: WorkoutControlIntent) => void
 	>();
@@ -204,7 +214,7 @@ export class WorkoutEngine {
 		}
 	}
 
-	getSnapshot(): MetricsState {
+	getSnapshot(): WorkoutMetricsSnapshot {
 		return cloneSnapshot(this.snapshot);
 	}
 
