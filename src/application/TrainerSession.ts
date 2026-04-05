@@ -30,7 +30,7 @@ type MetricsSnapshotCallback = (snapshot: WorkoutMetricsSnapshot) => void;
 type WorkoutSnapshotCallback = (snapshot: WorkoutSessionSnapshot) => void;
 type Unsubscribe = () => void;
 
-export interface TrainerConnection {
+export interface TrainerSessionApi {
 	requestDevice(): Promise<TrainerDeviceInfo>;
 	connect(): Promise<ConnectedTrainer>;
 	reconnect(): Promise<ConnectedTrainer>;
@@ -60,7 +60,7 @@ function normalizeUuid(uuid: string): string {
 	return uuid.toLowerCase();
 }
 
-abstract class EngineBackedTrainerConnection implements TrainerConnection {
+abstract class BaseTrainerSession implements TrainerSessionApi {
 	protected readonly disconnectCallbacks = new Set<DisconnectCallback>();
 	protected readonly metricsSnapshotCallbacks = new Set<MetricsSnapshotCallback>();
 	protected readonly workoutSnapshotCallbacks = new Set<WorkoutSnapshotCallback>();
@@ -193,7 +193,7 @@ abstract class EngineBackedTrainerConnection implements TrainerConnection {
 	}
 }
 
-export class TrainerSession extends EngineBackedTrainerConnection {
+export class TrainerSession extends BaseTrainerSession {
 	private bluetoothDevice: BluetoothDevice | undefined;
 	private connectedDevice: ConnectedFTMSDevice | undefined;
 	private controlAdapter: FTMSControlAdapter | undefined;
@@ -412,7 +412,7 @@ export class TrainerSession extends EngineBackedTrainerConnection {
 	}
 }
 
-class MockTrainerConnection extends EngineBackedTrainerConnection {
+class MockTrainerSession extends BaseTrainerSession {
 	private intervalId?: number;
 	private startedAt = Date.now();
 	private lastEmitAt = Date.now();
@@ -514,8 +514,8 @@ class MockTrainerConnection extends EngineBackedTrainerConnection {
 	}
 }
 
-export function createTrainerConnection(mode: TrainerMode): TrainerConnection {
+export function createTrainerConnection(mode: TrainerMode): TrainerSessionApi {
 	return mode === "simulate"
-		? new MockTrainerConnection()
+		? new MockTrainerSession()
 		: new TrainerSession();
 }

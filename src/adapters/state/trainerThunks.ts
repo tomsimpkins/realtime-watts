@@ -1,7 +1,7 @@
 import type { AppDispatch, AppThunk, RootState } from "../../app/store";
 import {
 	createTrainerConnection,
-	type TrainerConnection,
+	type TrainerSessionApi,
 } from "../../application/TrainerSession";
 import { createCheckingCapabilityResolution } from "../bluetooth/capabilityResolver";
 import type { TrainerEnvironment } from "../../domain/trainer";
@@ -22,7 +22,7 @@ import {
 import { clearWorkout, setWorkoutSnapshot } from "./workoutSlice";
 import { WORKOUTS_BY_ID } from "../../workouts/catalog";
 
-let activeClient: TrainerConnection | null = null;
+let activeTrainerSession: TrainerSessionApi | null = null;
 let unsubscribeMetricsSnapshot: (() => void) | undefined;
 let unsubscribeDisconnect: (() => void) | undefined;
 let unsubscribeWorkoutSnapshot: (() => void) | undefined;
@@ -36,36 +36,36 @@ function releaseClientSubscriptions(): void {
 	unsubscribeDisconnect = undefined;
 }
 
-async function disposeActiveClient(): Promise<void> {
-	if (!activeClient) {
+async function disposeActiveTrainerSession(): Promise<void> {
+	if (!activeTrainerSession) {
 		return;
 	}
 
 	try {
-		await activeClient.disconnect();
+		await activeTrainerSession.disconnect();
 	} catch (error) {
-		logDebug("Unable to disconnect previous trainer client cleanly", error);
+		logDebug("Unable to disconnect previous trainer session cleanly", error);
 	} finally {
 		releaseClientSubscriptions();
-		activeClient = null;
+		activeTrainerSession = null;
 	}
 }
 
-function bindClientListeners(
-	client: TrainerConnection,
+function bindTrainerSessionListeners(
+	trainerSession: TrainerSessionApi,
 	dispatch: AppDispatch,
 	getState: () => RootState,
 ): void {
 	releaseClientSubscriptions();
 
-	unsubscribeMetricsSnapshot = client.subscribeToMetricsSnapshot((snapshot) => {
+	unsubscribeMetricsSnapshot = trainerSession.subscribeToMetricsSnapshot((snapshot) => {
 		dispatch(setMetricsSnapshot(snapshot));
 	});
-	unsubscribeWorkoutSnapshot = client.subscribeToWorkoutSnapshot((snapshot) => {
+	unsubscribeWorkoutSnapshot = trainerSession.subscribeToWorkoutSnapshot((snapshot) => {
 		dispatch(setWorkoutSnapshot(snapshot));
 	});
 
-	unsubscribeDisconnect = client.onDisconnected(() => {
+	unsubscribeDisconnect = trainerSession.onDisconnected(() => {
 		releaseClientSubscriptions();
 		const isRideScreen = getState().app.currentScreen === "ride";
 
@@ -75,7 +75,7 @@ function bindClientListeners(
 				"Trainer disconnected. You can reconnect without reloading the page.",
 			),
 		);
-		dispatch(setMetricsSnapshot(client.getMetricsSnapshot()));
+		dispatch(setMetricsSnapshot(trainerSession.getMetricsSnapshot()));
 		dispatch(setDegradedDuringRide(isRideScreen));
 	});
 }
@@ -104,23 +104,23 @@ function ensureEnvironmentReady(
 }
 
 async function completeTrainerConnection(
-	client: TrainerConnection,
+	trainerSession: TrainerSessionApi,
 	dispatch: AppDispatch,
 	getState: () => RootState,
 	mode: TrainerEnvironment["mode"],
 	resetMetricsOnSuccess: boolean,
 	connectMethod: "connect" | "reconnect",
 ) {
-	const connectedTrainer = await client[connectMethod]();
+	const connectedTrainer = await trainerSession[connectMethod]();
 
-	bindClientListeners(client, dispatch, getState);
+	bindTrainerSessionListeners(trainerSession, dispatch, getState);
 
 	if (resetMetricsOnSuccess) {
 		dispatch(resetMetrics());
 	}
 
-	dispatch(setMetricsSnapshot(client.getMetricsSnapshot()));
-	dispatch(setWorkoutSnapshot(client.getWorkoutSnapshot()));
+	dispatch(setMetricsSnapshot(trainerSession.getMetricsSnapshot()));
+	dispatch(setWorkoutSnapshot(trainerSession.getWorkoutSnapshot()));
 
 	dispatch(setDevice(connectedTrainer.device));
 	dispatch(setTrainerTopology(connectedTrainer.topology));
@@ -153,16 +153,16 @@ export const connectTrainer =
 		dispatch(setDegradedDuringRide(false));
 		dispatch(setConnectionState("requesting"));
 
-		await disposeActiveClient();
-		const client = createTrainerConnection(environment.mode);
-		activeClient = client;
+		await disposeActiveTrainerSession();
+		const trainerSession = createTrainerConnection(environment.mode);
+		activeTrainerSession = trainerSession;
 
 		try {
-			const device = await client.requestDevice();
+			const device = await trainerSession.requestDevice();
 			dispatch(setDevice(device));
 			dispatch(setConnectionState("connecting"));
 			await completeTrainerConnection(
-				client,
+				trainerSession,
 				dispatch,
 				getState,
 				environment.mode,
@@ -183,7 +183,7 @@ export const retryTrainerSetup =
 			return;
 		}
 
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			dispatch(
 				setError(
 					"No previous trainer is available to retry. Use Connect Trainer instead.",
@@ -204,7 +204,7 @@ export const retryTrainerSetup =
 
 		try {
 			await completeTrainerConnection(
-				activeClient,
+				activeTrainerSession,
 				dispatch,
 				getState,
 				environment.mode,
@@ -225,7 +225,7 @@ export const retryTrainerConnection =
 			return;
 		}
 
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			dispatch(
 				setError(
 					"Cannot reconnect without a remembered trainer. Return to setup to connect again.",
@@ -238,7 +238,7 @@ export const retryTrainerConnection =
 
 		try {
 			await completeTrainerConnection(
-				activeClient,
+				activeTrainerSession,
 				dispatch,
 				getState,
 				environment.mode,
@@ -253,7 +253,7 @@ export const retryTrainerConnection =
 
 export const disconnectTrainer =
 	(): AppThunk<Promise<void>> => async (dispatch) => {
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			dispatch(resetTrainerSession());
 			dispatch(resetMetrics());
 			dispatch(clearWorkout());
@@ -263,12 +263,12 @@ export const disconnectTrainer =
 		dispatch(setConnectionState("disconnecting"));
 
 		try {
-			await activeClient.disconnect();
+			await activeTrainerSession.disconnect();
 		} catch (error) {
 			logError("Failed to disconnect trainer", error);
 		} finally {
 			releaseClientSubscriptions();
-			activeClient = null;
+			activeTrainerSession = null;
 			dispatch(resetTrainerSession());
 			dispatch(resetMetrics());
 			dispatch(clearWorkout());
@@ -284,7 +284,7 @@ export const beginWorkoutSession =
 			return;
 		}
 
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			dispatch(
 				setWorkoutSnapshot({
 					selectedWorkoutId: workout.id,
@@ -297,39 +297,39 @@ export const beginWorkoutSession =
 			return;
 		}
 
-		activeClient.selectWorkout(workout);
-		activeClient.startWorkout(Date.now());
-		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+		activeTrainerSession.selectWorkout(workout);
+		activeTrainerSession.startWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeTrainerSession.getWorkoutSnapshot()));
 	};
 
 export const pauseWorkoutSession =
 	(): AppThunk =>
 	(dispatch) => {
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			return;
 		}
 
-		activeClient.pauseWorkout(Date.now());
-		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+		activeTrainerSession.pauseWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeTrainerSession.getWorkoutSnapshot()));
 	};
 
 export const resumeWorkoutSession =
 	(): AppThunk =>
 	(dispatch) => {
-		if (!activeClient) {
+		if (!activeTrainerSession) {
 			return;
 		}
 
-		activeClient.resumeWorkout(Date.now());
-		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+		activeTrainerSession.resumeWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeTrainerSession.getWorkoutSnapshot()));
 	};
 
 export const endWorkoutSession =
 	(): AppThunk =>
 	(dispatch) => {
-		if (activeClient) {
-			activeClient.endWorkout();
-			dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+		if (activeTrainerSession) {
+			activeTrainerSession.endWorkout();
+			dispatch(setWorkoutSnapshot(activeTrainerSession.getWorkoutSnapshot()));
 			return;
 		}
 
