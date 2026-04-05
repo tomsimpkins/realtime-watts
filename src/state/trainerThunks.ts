@@ -263,6 +263,7 @@ export const disconnectTrainer =
 		if (!activeClient) {
 			dispatch(resetTrainerSession());
 			dispatch(resetMetrics());
+			dispatch(clearWorkout());
 			return;
 		}
 
