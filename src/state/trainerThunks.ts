@@ -1,21 +1,16 @@
 import type { AppDispatch, AppThunk, RootState } from "../app/store";
-import { createTrainerClient, type TrainerClient } from "../ble/trainerClient";
+import {
+	createTrainerConnection,
+	type TrainerConnection,
+} from "../ble/FTMSClient";
 import {
 	createCheckingCapabilityResolution,
 	resolveCapabilities,
 } from "../ble/capabilityResolver";
 import type { TrainerEnvironment } from "../domain/trainer";
-import {
-	decodeCyclingPowerPacket,
-	estimateCadenceRpm,
-	estimateDistanceKm,
-	estimateSpeedKph,
-	type CyclingPowerCrankData,
-	type CyclingPowerWheelData,
-} from "../protocol/cyclingPower";
 import { getTrainerEnvironment } from "../utils/environment";
 import { getUserFacingError, logDebug, logError } from "../utils/errors";
-import { markStreamIdle, pushPowerSample, resetMetrics } from "./metricsSlice";
+import { resetMetrics, setMetricsSnapshot } from "./metricsSlice";
 import {
 	resetTrainerSession,
 	setCapabilities,
@@ -27,15 +22,20 @@ import {
 	setError,
 	setTrainerTopology,
 } from "./trainerSlice";
+import { clearWorkout, setWorkoutSnapshot } from "./workoutSlice";
+import { WORKOUTS_BY_ID } from "../workouts/catalog";
 
-let activeClient: TrainerClient | null = null;
-let unsubscribePower: (() => void) | undefined;
+let activeClient: TrainerConnection | null = null;
+let unsubscribeMetricsSnapshot: (() => void) | undefined;
 let unsubscribeDisconnect: (() => void) | undefined;
+let unsubscribeWorkoutSnapshot: (() => void) | undefined;
 
 function releaseClientSubscriptions(): void {
-	unsubscribePower?.();
+	unsubscribeMetricsSnapshot?.();
+	unsubscribeWorkoutSnapshot?.();
 	unsubscribeDisconnect?.();
-	unsubscribePower = undefined;
+	unsubscribeMetricsSnapshot = undefined;
+	unsubscribeWorkoutSnapshot = undefined;
 	unsubscribeDisconnect = undefined;
 }
 
@@ -55,82 +55,17 @@ async function disposeActiveClient(): Promise<void> {
 }
 
 function bindClientListeners(
-	client: TrainerClient,
+	client: TrainerConnection,
 	dispatch: AppDispatch,
 	getState: () => RootState,
 ): void {
 	releaseClientSubscriptions();
-	let initialWheelData: CyclingPowerWheelData | undefined;
-	let previousCadenceRpm: number | undefined;
-	let previousCrankData: CyclingPowerCrankData | undefined;
-	let previousSpeedKph: number | undefined;
-	let previousWheelData: CyclingPowerWheelData | undefined;
 
-	unsubscribePower = client.subscribeToPower((packet) => {
-		const decoded = decodeCyclingPowerPacket(packet);
-
-		if (!decoded) {
-			logDebug("Ignoring malformed or unsupported cycling power packet");
-			return;
-		}
-
-		if (decoded.wheelRevolutionData && !initialWheelData) {
-			initialWheelData = decoded.wheelRevolutionData;
-		}
-
-		const cadenceRpm =
-			estimateCadenceRpm(previousCrankData, decoded.crankRevolutionData) ??
-			previousCadenceRpm;
-		const speedKph =
-			estimateSpeedKph(previousWheelData, decoded.wheelRevolutionData) ??
-			previousSpeedKph;
-		const distanceKm = estimateDistanceKm(
-			initialWheelData,
-			decoded.wheelRevolutionData,
-		);
-
-		if (decoded.crankRevolutionData) {
-			const crankDataChanged =
-				!previousCrankData ||
-				decoded.crankRevolutionData.cumulativeCrankRevolutions !==
-					previousCrankData.cumulativeCrankRevolutions ||
-				decoded.crankRevolutionData.lastCrankEventTime !==
-					previousCrankData.lastCrankEventTime;
-
-			if (crankDataChanged) {
-				previousCrankData = decoded.crankRevolutionData;
-			}
-		}
-
-		if (decoded.wheelRevolutionData) {
-			const wheelDataChanged =
-				!previousWheelData ||
-				decoded.wheelRevolutionData.cumulativeWheelRevolutions !==
-					previousWheelData.cumulativeWheelRevolutions ||
-				decoded.wheelRevolutionData.lastWheelEventTime !==
-					previousWheelData.lastWheelEventTime;
-
-			if (wheelDataChanged) {
-				previousWheelData = decoded.wheelRevolutionData;
-			}
-		}
-
-		if (typeof cadenceRpm === "number") {
-			previousCadenceRpm = cadenceRpm;
-		}
-
-		if (typeof speedKph === "number") {
-			previousSpeedKph = speedKph;
-		}
-
-		dispatch(
-			pushPowerSample({
-				...decoded.measurement,
-				cadenceRpm,
-				distanceKm,
-				speedKph,
-			}),
-		);
+	unsubscribeMetricsSnapshot = client.subscribeToMetricsSnapshot((snapshot) => {
+		dispatch(setMetricsSnapshot(snapshot));
+	});
+	unsubscribeWorkoutSnapshot = client.subscribeToWorkoutSnapshot((snapshot) => {
+		dispatch(setWorkoutSnapshot(snapshot));
 	});
 
 	unsubscribeDisconnect = client.onDisconnected(() => {
@@ -143,7 +78,7 @@ function bindClientListeners(
 				"Trainer disconnected. You can reconnect without reloading the page.",
 			),
 		);
-		dispatch(markStreamIdle());
+		dispatch(setMetricsSnapshot(client.getMetricsSnapshot()));
 		dispatch(setDegradedDuringRide(isRideScreen));
 	});
 }
@@ -172,7 +107,7 @@ function ensureEnvironmentReady(
 }
 
 async function completeTrainerConnection(
-	client: TrainerClient,
+	client: TrainerConnection,
 	dispatch: AppDispatch,
 	getState: () => RootState,
 	mode: TrainerEnvironment["mode"],
@@ -190,6 +125,9 @@ async function completeTrainerConnection(
 	if (resetMetricsOnSuccess) {
 		dispatch(resetMetrics());
 	}
+
+	dispatch(setMetricsSnapshot(client.getMetricsSnapshot()));
+	dispatch(setWorkoutSnapshot(client.getWorkoutSnapshot()));
 
 	dispatch(setDevice(connectedTrainer.device));
 	dispatch(setTrainerTopology(connectedTrainer.topology));
@@ -223,7 +161,7 @@ export const connectTrainer =
 		dispatch(setConnectionState("requesting"));
 
 		await disposeActiveClient();
-		const client = createTrainerClient(environment.mode);
+		const client = createTrainerConnection(environment.mode);
 		activeClient = client;
 
 		try {
@@ -339,5 +277,67 @@ export const disconnectTrainer =
 			activeClient = null;
 			dispatch(resetTrainerSession());
 			dispatch(resetMetrics());
+			dispatch(clearWorkout());
 		}
+	};
+
+export const beginWorkoutSession =
+	(workoutId: string): AppThunk =>
+	(dispatch) => {
+		const workout = WORKOUTS_BY_ID[workoutId];
+
+		if (!workout) {
+			return;
+		}
+
+		if (!activeClient) {
+			dispatch(
+				setWorkoutSnapshot({
+					selectedWorkoutId: workout.id,
+					status: "active",
+					accumulatedElapsedMs: 0,
+					runningSinceMs: Date.now(),
+					completedAtMs: undefined,
+				}),
+			);
+			return;
+		}
+
+		activeClient.selectWorkout(workout);
+		activeClient.startWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+	};
+
+export const pauseWorkoutSession =
+	(): AppThunk =>
+	(dispatch) => {
+		if (!activeClient) {
+			return;
+		}
+
+		activeClient.pauseWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+	};
+
+export const resumeWorkoutSession =
+	(): AppThunk =>
+	(dispatch) => {
+		if (!activeClient) {
+			return;
+		}
+
+		activeClient.resumeWorkout(Date.now());
+		dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+	};
+
+export const endWorkoutSession =
+	(): AppThunk =>
+	(dispatch) => {
+		if (activeClient) {
+			activeClient.endWorkout();
+			dispatch(setWorkoutSnapshot(activeClient.getWorkoutSnapshot()));
+			return;
+		}
+
+		dispatch(clearWorkout());
 	};

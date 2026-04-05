@@ -9,9 +9,8 @@ import {
 	createEmptyCapabilities,
 } from "../domain/trainer";
 import {
-	CYCLING_POWER_MEASUREMENT_CHARACTERISTIC_UUIDS,
-	CYCLING_POWER_SERVICE_UUIDS,
 	FITNESS_MACHINE_CONTROL_CHARACTERISTIC_UUIDS,
+	FITNESS_MACHINE_FEATURE_CHARACTERISTIC_UUIDS,
 	FITNESS_MACHINE_SERVICE_UUIDS,
 } from "./uuids";
 
@@ -72,40 +71,35 @@ export function resolveCapabilities({
 		.flat()
 		.map(normalizeUuid);
 
-	const hasCyclingPowerService = includesAny(
-		CYCLING_POWER_SERVICE_UUIDS,
-		serviceUuids,
-	);
-	const hasPowerMeasurementCharacteristic = includesAny(
-		CYCLING_POWER_MEASUREMENT_CHARACTERISTIC_UUIDS,
-		allCharacteristicUuids,
-	);
 	const hasFtmsService = includesAny(
 		FITNESS_MACHINE_SERVICE_UUIDS,
 		serviceUuids,
+	);
+	const hasFtmsFeature = includesAny(
+		FITNESS_MACHINE_FEATURE_CHARACTERISTIC_UUIDS,
+		allCharacteristicUuids,
 	);
 	const hasFtmsControl = includesAny(
 		FITNESS_MACHINE_CONTROL_CHARACTERISTIC_UUIDS,
 		allCharacteristicUuids,
 	);
 
-	const powerAvailable =
-		hasCyclingPowerService && hasPowerMeasurementCharacteristic;
+	const telemetryAvailable = hasFtmsService && hasFtmsFeature;
 	const controlAvailable = hasFtmsService && hasFtmsControl;
 
 	return {
 		capabilities: {
-			power: powerAvailable,
-			cadence: false,
-			speed: false,
+			power: telemetryAvailable,
+			cadence: telemetryAvailable,
+			speed: telemetryAvailable,
 			resistanceControl: controlAvailable,
 			ergMode: controlAvailable,
 			simulationMode: controlAvailable,
 		},
 		statuses: {
-			power: powerAvailable ? "available" : "unavailable",
-			cadence: "unavailable",
-			speed: "unavailable",
+			power: telemetryAvailable ? "available" : "unavailable",
+			cadence: telemetryAvailable ? "available" : "unavailable",
+			speed: telemetryAvailable ? "available" : "unavailable",
 			resistanceControl: controlAvailable ? "available" : "unavailable",
 			ergMode: controlAvailable ? "available" : "unavailable",
 			simulationMode: controlAvailable ? "available" : "unavailable",

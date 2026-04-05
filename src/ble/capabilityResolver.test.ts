@@ -5,8 +5,6 @@ import {
 	resolveCapabilities,
 } from "./capabilityResolver";
 import {
-	CYCLING_POWER_MEASUREMENT_CHARACTERISTIC,
-	CYCLING_POWER_SERVICE,
 	FITNESS_MACHINE_CONTROL_POINT_CHARACTERISTIC,
 	FITNESS_MACHINE_FEATURE_CHARACTERISTIC,
 	FITNESS_MACHINE_SERVICE,
@@ -45,19 +43,23 @@ describe("resolveCapabilities", () => {
 		});
 	});
 
-	it("marks only power as available for a cycling-power-only topology", () => {
+	it("marks telemetry as available for an FTMS feature topology", () => {
 		const result = resolveCapabilities({
 			mode: "ble",
 			topology: {
-				serviceUuids: [CYCLING_POWER_SERVICE],
+				serviceUuids: [FITNESS_MACHINE_SERVICE],
 				characteristicUuidsByService: {
-					[CYCLING_POWER_SERVICE]: [CYCLING_POWER_MEASUREMENT_CHARACTERISTIC],
+					[FITNESS_MACHINE_SERVICE]: [FITNESS_MACHINE_FEATURE_CHARACTERISTIC],
 				},
 			},
 		});
 
 		expect(result.capabilities.power).toBe(true);
+		expect(result.capabilities.cadence).toBe(true);
+		expect(result.capabilities.speed).toBe(true);
 		expect(result.statuses.power).toBe("available");
+		expect(result.statuses.cadence).toBe("available");
+		expect(result.statuses.speed).toBe("available");
 		expect(result.capabilities.resistanceControl).toBe(false);
 		expect(result.statuses.ergMode).toBe("unavailable");
 	});
@@ -66,9 +68,8 @@ describe("resolveCapabilities", () => {
 		const result = resolveCapabilities({
 			mode: "ble",
 			topology: {
-				serviceUuids: [CYCLING_POWER_SERVICE, FITNESS_MACHINE_SERVICE],
+				serviceUuids: [FITNESS_MACHINE_SERVICE],
 				characteristicUuidsByService: {
-					[CYCLING_POWER_SERVICE]: [CYCLING_POWER_MEASUREMENT_CHARACTERISTIC],
 					[FITNESS_MACHINE_SERVICE]: [
 						FITNESS_MACHINE_CONTROL_POINT_CHARACTERISTIC,
 						FITNESS_MACHINE_FEATURE_CHARACTERISTIC,

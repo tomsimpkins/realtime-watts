@@ -4,6 +4,13 @@ import type { RootState } from "../app/store";
 
 export const selectMetricsState = (state: RootState) => state.metrics;
 
+export const RECENT_POWER_HISTOGRAM_GRAIN_MS = 5_000;
+
+export interface PowerHistogramBin {
+	timestamp: number;
+	watts: number;
+}
+
 export const selectLatestPower = createSelector(
 	[selectMetricsState],
 	(metrics) => metrics.latestPower,
@@ -41,6 +48,46 @@ export const selectDistanceDisplay = createSelector(
 export const selectRecentPower = createSelector(
 	[selectMetricsState],
 	(metrics) => metrics.recentPower,
+);
+
+export const selectRecentPowerHistogram = createSelector(
+	[selectRecentPower],
+	(recentPower): PowerHistogramBin[] => {
+		const buckets = new Map<
+			number,
+			{
+				sampleCount: number;
+				totalWatts: number;
+			}
+		>();
+
+		for (const sample of recentPower) {
+			const bucketStart =
+				Math.floor(sample.timestamp / RECENT_POWER_HISTOGRAM_GRAIN_MS) *
+				RECENT_POWER_HISTOGRAM_GRAIN_MS;
+			const bucket = buckets.get(bucketStart);
+
+			if (bucket) {
+				bucket.sampleCount += 1;
+				bucket.totalWatts += sample.watts;
+				continue;
+			}
+
+			buckets.set(bucketStart, {
+				sampleCount: 1,
+				totalWatts: sample.watts,
+			});
+		}
+
+		return Array.from(buckets.entries())
+			.sort(([leftTimestamp], [rightTimestamp]) =>
+				leftTimestamp - rightTimestamp,
+			)
+			.map(([timestamp, bucket]) => ({
+				timestamp,
+				watts: Math.round(bucket.totalWatts / bucket.sampleCount),
+			}));
+	},
 );
 
 export const selectAverageWatts10s = createSelector(

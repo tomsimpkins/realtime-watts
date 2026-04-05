@@ -2,8 +2,8 @@ import { Badge, Button, Card, Group, Stack, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { beginWorkoutSession } from "../state/trainerThunks";
 import { selectDeviceName } from "../state/trainerSelectors";
-import { selectWorkout, startWorkout } from "../state/workoutSlice";
 import { WORKOUT_CATALOG } from "../workouts/catalog";
 
 function formatDuration(seconds: number) {
@@ -81,8 +81,7 @@ export function WorkoutSelectionScreen() {
 										: "button-primary"
 								}
 								onClick={() => {
-									dispatch(selectWorkout(workout.id));
-									dispatch(startWorkout(Date.now()));
+									dispatch(beginWorkoutSession(workout.id));
 									navigate("/ride");
 								}}
 							>

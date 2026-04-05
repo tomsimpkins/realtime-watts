@@ -107,8 +107,8 @@ function getSecondaryActionLabel(setup: ConnectSetupModel) {
 
 const testBluetooth = async () => {
 	await ftmsManager.requestDevice();
+	await ftmsManager.connect();
 	const device = ftmsManager.device!;
-	await device.connect();
 	const features = await device.readCapabilities();
 	console.log(features);
 };

@@ -1,7 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { PowerMeasurement } from "../domain/trainer";
-import { appendAndTrimByTime } from "../utils/ringBuffer";
 
 export interface MetricsState {
 	latestPower?: PowerMeasurement;
@@ -11,9 +10,6 @@ export interface MetricsState {
 		sampleCount: number;
 	};
 }
-
-const MAX_RECENT_POWER_SAMPLES = 240;
-const RECENT_POWER_WINDOW_MS = 120_000;
 
 const initialState: MetricsState = {
 	recentPower: [],
@@ -26,14 +22,12 @@ const metricsSlice = createSlice({
 	name: "metrics",
 	initialState,
 	reducers: {
+		setMetricsSnapshot(_state, action: PayloadAction<MetricsState>) {
+			return action.payload;
+		},
 		pushPowerSample(state, action: PayloadAction<PowerMeasurement>) {
 			state.latestPower = action.payload;
-			state.recentPower = appendAndTrimByTime(
-				state.recentPower,
-				action.payload,
-				MAX_RECENT_POWER_SAMPLES,
-				RECENT_POWER_WINDOW_MS,
-			);
+			state.recentPower = [...state.recentPower, action.payload];
 			state.diagnostics.lastPacketTimestamp = action.payload.timestamp;
 			state.diagnostics.sampleCount += 1;
 		},
@@ -54,6 +48,7 @@ export const {
 	pushPowerSample,
 	resetLiveMetricValuesPreserveHistory,
 	resetMetrics,
+	setMetricsSnapshot,
 } = metricsSlice.actions;
 
 export default metricsSlice.reducer;

@@ -10,7 +10,7 @@ import {
 	selectCadenceDisplay,
 	selectDistanceDisplay,
 	selectPowerDisplay,
-	selectRecentPower,
+	selectRecentPowerHistogram,
 	selectSpeedDisplay,
 } from "../state/metricsSelectors";
 import { retryTrainerConnection } from "../state/trainerThunks";
@@ -42,7 +42,7 @@ export function RideScreen() {
 		selectCurrentBlockRemainingLabel,
 	);
 	const powerDisplay = useAppSelector(selectPowerDisplay);
-	const recentPower = useAppSelector(selectRecentPower);
+	const recentPowerHistogram = useAppSelector(selectRecentPowerHistogram);
 	const speedDisplay = useAppSelector(selectSpeedDisplay);
 	const rideBanner = useAppSelector(selectRideBannerModel);
 	const workoutSummary = useAppSelector(selectWorkoutSummary);
@@ -132,7 +132,7 @@ export function RideScreen() {
 					</Paper>
 				}
 			>
-				<PowerChart samples={recentPower} />
+				<PowerChart bins={recentPowerHistogram} />
 			</Suspense>
 
 			<Group className="action-row">

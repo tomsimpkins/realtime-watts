@@ -1,7 +1,7 @@
 import { Paper, Stack, Text } from "@mantine/core";
 import {
-	Area,
-	AreaChart,
+	Bar,
+	BarChart,
 	CartesianGrid,
 	ResponsiveContainer,
 	Tooltip,
@@ -9,19 +9,19 @@ import {
 	YAxis,
 } from "recharts";
 
-import type { PowerMeasurement } from "../domain/trainer";
+import type { PowerHistogramBin } from "../state/metricsSelectors";
 
 interface PowerChartProps {
-	samples: PowerMeasurement[];
+	bins: PowerHistogramBin[];
 }
 
-export function PowerChart({ samples }: PowerChartProps) {
-	const chartData = samples.map((sample) => ({
-		label: new Date(sample.timestamp).toLocaleTimeString([], {
+export function PowerChart({ bins }: PowerChartProps) {
+	const chartData = bins.map((bin) => ({
+		label: new Date(bin.timestamp).toLocaleTimeString([], {
 			minute: "2-digit",
 			second: "2-digit",
 		}),
-		watts: sample.watts,
+		watts: bin.watts,
 	}));
 
 	return (
@@ -30,14 +30,14 @@ export function PowerChart({ samples }: PowerChartProps) {
 				<div>
 					<Text className="section-title">Recent Power</Text>
 					<Text className="section-copy">
-						Rolling wattage history from the current session.
+						Average wattage in 5-second bars from the current session.
 					</Text>
 				</div>
 
 				{chartData.length ? (
 					<div style={{ height: 240, width: "100%" }}>
 						<ResponsiveContainer>
-							<AreaChart data={chartData}>
+							<BarChart data={chartData}>
 								<CartesianGrid
 									stroke="rgba(255,255,255,0.06)"
 									strokeDasharray="3 3"
@@ -54,23 +54,22 @@ export function PowerChart({ samples }: PowerChartProps) {
 									width={44}
 								/>
 								<Tooltip
+									cursor={{ fill: "rgba(255,255,255,0.06)" }}
 									contentStyle={{
 										background: "#101821",
 										border: "1px solid rgba(255,255,255,0.05)",
 										borderRadius: "16px",
 									}}
-									formatter={(value: number) => [`${value} W`, "Power"]}
+									formatter={(value: number) => [`${value} W`, "Avg Power"]}
 									labelFormatter={(label) => `Time ${label}`}
 								/>
-								<Area
+								<Bar
 									dataKey="watts"
-									fill="rgba(0, 212, 187, 0.14)"
-									fillOpacity={1}
-									stroke="#00d4bb"
-									strokeWidth={3}
-									type="monotone"
+									fill="#00d4bb"
+									maxBarSize={28}
+									radius={[8, 8, 0, 0]}
 								/>
-							</AreaChart>
+							</BarChart>
 						</ResponsiveContainer>
 					</div>
 				) : (

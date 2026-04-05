@@ -5,9 +5,11 @@ import {
 	endWorkout,
 	pauseWorkout,
 	resumeWorkout,
+	selectWorkout,
 	startWorkout,
 	tickWorkout,
 } from "./workoutSlice";
+import { syncWorkoutSessionToTrainerState } from "./trainerThunks";
 import { selectSelectedWorkout } from "./workoutSelectors";
 
 let workoutIntervalId: ReturnType<typeof globalThis.setInterval> | undefined;
@@ -69,6 +71,20 @@ export function registerWorkoutListeners(
 			if (elapsedSeconds >= workout.durationSeconds) {
 				api.dispatch(completeWorkout(Date.now()));
 			}
+		},
+	});
+
+	startListening({
+		matcher: (action) =>
+			selectWorkout.match(action) ||
+			startWorkout.match(action) ||
+			pauseWorkout.match(action) ||
+			resumeWorkout.match(action) ||
+			tickWorkout.match(action) ||
+			completeWorkout.match(action) ||
+			endWorkout.match(action),
+		effect: async (_, api) => {
+			syncWorkoutSessionToTrainerState(api.getState() as RootState);
 		},
 	});
 }
