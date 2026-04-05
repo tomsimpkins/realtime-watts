@@ -371,15 +371,19 @@ export class WorkoutEngine {
 		}
 
 		const elapsedMs = this.getElapsedAt(event.payload.clockMs);
+		const structuredWorkout =
+			this.workoutDefinition?.type === "structured"
+				? this.workoutDefinition
+				: undefined;
 		const shouldComplete =
-			this.workoutDefinition?.type === "structured" &&
-			elapsedMs >= this.workoutDefinition.durationSeconds * 1000;
+			typeof structuredWorkout !== "undefined" &&
+			elapsedMs >= structuredWorkout.durationSeconds * 1000;
 
 		if (shouldComplete) {
 			this.workoutSnapshot = {
 				...this.workoutSnapshot,
 				status: "completed",
-				accumulatedElapsedMs: this.workoutDefinition.durationSeconds * 1000,
+				accumulatedElapsedMs: structuredWorkout.durationSeconds * 1000,
 				runningSinceMs: undefined,
 				completedAtMs: event.payload.clockMs,
 			};

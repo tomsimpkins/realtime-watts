@@ -103,33 +103,33 @@ describe("WorkoutEngine", () => {
 		});
 
 		engine.dispatch({
-			type: "workout.session-updated",
+			type: "workout.selected",
 			payload: {
-				elapsedMs: 300_000,
-				status: "active",
 				workout: WORKOUTS_BY_ID.twoByTwenty,
+			},
+		});
+		engine.dispatch({
+			type: "workout.started",
+			payload: {
+				clockMs: 0,
+			},
+		});
+		engine.dispatch({
+			type: "clock.ticked",
+			payload: {
+				clockMs: 900_000,
 			},
 		});
 
 		engine.dispatch({
-			type: "workout.session-updated",
+			type: "workout.paused",
 			payload: {
-				elapsedMs: 900_000,
-				status: "active",
-				workout: WORKOUTS_BY_ID.twoByTwenty,
-			},
-		});
-
-		engine.dispatch({
-			type: "workout.session-updated",
-			payload: {
-				elapsedMs: 2_700_000,
-				status: "paused",
-				workout: WORKOUTS_BY_ID.twoByTwenty,
+				clockMs: 2_700_000,
 			},
 		});
 
 		expect(intents).toEqual([
+			JSON.stringify({ type: "trainer.control.disable-erg" }),
 			JSON.stringify({
 				type: "trainer.control.set-erg-power",
 				payload: { watts: 225 },
@@ -147,24 +147,35 @@ describe("WorkoutEngine", () => {
 		});
 
 		engine.dispatch({
-			type: "workout.session-updated",
+			type: "workout.selected",
 			payload: {
-				elapsedMs: 900_000,
-				status: "active",
 				workout: WORKOUTS_BY_ID.twoByTwenty,
 			},
 		});
 
 		engine.dispatch({
-			type: "workout.session-updated",
+			type: "workout.started",
 			payload: {
-				elapsedMs: 1_200_000,
-				status: "active",
-				workout: WORKOUTS_BY_ID.twoByTwenty,
+				clockMs: 0,
+			},
+		});
+
+		engine.dispatch({
+			type: "clock.ticked",
+			payload: {
+				clockMs: 900_000,
+			},
+		});
+
+		engine.dispatch({
+			type: "clock.ticked",
+			payload: {
+				clockMs: 1_200_000,
 			},
 		});
 
 		expect(intents).toEqual([
+			JSON.stringify({ type: "trainer.control.disable-erg" }),
 			JSON.stringify({
 				type: "trainer.control.set-erg-power",
 				payload: { watts: 225 },
