@@ -103,9 +103,11 @@ class FTMSDevice {
 
 	async getBikeDatasource() {
 		const service = this.mustGetService();
-		return new BikeDataSource(
-			await service.getCharacteristic(indoorBikeDataCharacteristicId),
+		const indoorBikeCharacteristic = await service.getCharacteristic(
+			indoorBikeDataCharacteristicId,
 		);
+
+		return new BikeDataSource(indoorBikeCharacteristic);
 	}
 
 	async readCapabilities(): Promise<FTMSFeatures> {
@@ -291,5 +293,139 @@ class BikeDataSource {
 	subscribe(listener: IndoorBikeDataListener): Unsubscribe {
 		this.listeners.add(listener);
 		return () => this.listeners.delete(listener);
+	}
+}
+
+type WorkoutSnapshot = {
+	status: "idle" | "running" | "paused" | "finished";
+	elapsedMs: number;
+	powerW: number;
+};
+type WorkoutEvent =
+	| { type: "workout.started"; payload: { clockMs: number } }
+	| { type: "workout.paused"; payload: { clockMs: number } }
+	| { type: "clock.ticked"; payload: { clockMs: number } }
+	| {
+			type: "workout.telemetry";
+			payload: {
+				telemetryMs: number;
+				cadenceRpm: number;
+				speedKph: number;
+				powerW: number;
+			};
+	  };
+
+type WorkoutState =
+	| {
+			status: "idle";
+	  }
+	| {
+			status: "running";
+			startClockMs: number;
+			clockMs: number;
+			telemetrySample: Array<
+				Extract<WorkoutEvent, { type: "workout.telemetry" }>["payload"]
+			>;
+	  }
+	| {
+			status: "paused";
+			startClockMs: number;
+			clockMs: number;
+			telemetrySample: Array<
+				Extract<WorkoutEvent, { type: "workout.telemetry" }>["payload"]
+			>;
+	  };
+
+class WorkoutEngine {
+	private state: WorkoutState = { status: "idle" };
+
+	static readonly sampleWindowMs = 3_000;
+
+	dispatch(event: WorkoutEvent) {
+		this.state = this.reduceWorkout(this.state, event);
+	}
+
+	private reduceWorkout(
+		state: WorkoutState,
+		event: WorkoutEvent,
+	): WorkoutState {
+		switch (state.status) {
+			case "idle":
+				return this.reduceIdle(state, event);
+			case "running":
+				return this.reduceRunning(state, event);
+			case "paused":
+				return this.reducePaused(state, event);
+		}
+	}
+
+	private reduceIdle(
+		state: Extract<WorkoutState, { status: "idle" }>,
+		event: WorkoutEvent,
+	): WorkoutState {
+		switch (event.type) {
+			case "workout.started":
+				return {
+					status: "running",
+					clockMs: event.payload.clockMs,
+					startClockMs: event.payload.clockMs,
+					telemetrySample: [],
+				};
+			default:
+				return state;
+		}
+	}
+
+	private reduceRunning(
+		state: Extract<WorkoutState, { status: "running" }>,
+		event: WorkoutEvent,
+	): WorkoutState {
+		switch (event.type) {
+			case "workout.paused":
+				return { ...state, status: "paused" };
+			case "clock.ticked":
+				return { ...state, clockMs: event.payload.clockMs };
+			case "workout.telemetry":
+				return {
+					...state,
+					telemetrySample: [...state.telemetrySample, event.payload].filter(
+						(p) =>
+							event.payload.telemetryMs - p.telemetryMs <
+							WorkoutEngine.sampleWindowMs,
+					),
+				};
+
+			default:
+				return state;
+		}
+	}
+
+	private reducePaused(
+		state: Extract<WorkoutState, { status: "paused" }>,
+		event: WorkoutEvent,
+	): WorkoutState {
+		return state;
+	}
+
+	private mapStateToSnapshot(state: WorkoutState): WorkoutSnapshot {
+		switch (state.status) {
+			case "idle":
+				return { status: "idle", elapsedMs: 0, powerW: 0 };
+			case "paused":
+				return { status: "paused", elapsedMs: 0, powerW: 0 };
+			case "running":
+				return {
+					status: "running",
+					elapsedMs: state.clockMs - state.startClockMs,
+					powerW:
+						state.telemetrySample
+							.map((p) => p.powerW)
+							.reduce((a, b) => a + b, 0) / state.telemetrySample.length,
+				};
+		}
+	}
+
+	getSnapshot(): WorkoutSnapshot {
+		return this.mapStateToSnapshot(this.state);
 	}
 }
