@@ -118,7 +118,10 @@ export function RideScreen() {
 				powerDisplay={powerDisplay}
 			/>
 
-			{/* <RideStatsDisplay distanceDisplay={distanceDisplay} speedDisplay={speedDisplay} /> */}
+			<RideStatsDisplay
+				distanceDisplay={distanceDisplay}
+				speedDisplay={speedDisplay}
+			/>
 
 			<Suspense
 				fallback={
