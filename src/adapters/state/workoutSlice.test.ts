@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { createTestStore, createTestState } from "../../test/testUtils";
 import {
-	selectCurrentBlockIndex,
 	selectCurrentBlockRemainingLabel,
 	selectCurrentBlockRemainingSeconds,
 	selectCurrentTargetLabel,
@@ -42,7 +41,6 @@ describe("workoutSlice and selectors", () => {
 			},
 		});
 
-		expect(selectCurrentBlockIndex(store.getState())).toBe(0);
 		expect(selectCurrentBlockRemainingSeconds(store.getState())).toBe(1);
 
 		store.dispatch(
@@ -54,7 +52,6 @@ describe("workoutSlice and selectors", () => {
 				completedAtMs: undefined,
 			}),
 		);
-		expect(selectCurrentBlockIndex(store.getState())).toBe(1);
 		expect(selectCurrentBlockRemainingSeconds(store.getState())).toBe(1_200);
 	});
 

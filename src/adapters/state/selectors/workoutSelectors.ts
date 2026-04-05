@@ -20,8 +20,6 @@ function formatSecondsAsClock(totalSeconds: number) {
 
 export const selectWorkoutState = (state: RootState) => state.workout;
 
-export const selectWorkoutCatalog = () => WORKOUT_CATALOG;
-
 export const selectSelectedWorkoutId = createSelector(
 	[selectWorkoutState],
 	(workout) => workout.selectedWorkoutId,
@@ -38,7 +36,7 @@ export const selectWorkoutStatus = createSelector(
 	(workout) => workout.status,
 );
 
-export const selectElapsedMs = createSelector(
+const selectElapsedMs = createSelector(
 	[selectWorkoutState],
 	(workout) => workout.accumulatedElapsedMs,
 );
@@ -78,7 +76,7 @@ function findCurrentBlock(blocks: WorkoutBlock[], elapsedSeconds: number) {
 	};
 }
 
-export const selectCurrentBlockDetails = createSelector(
+const selectCurrentBlockDetails = createSelector(
 	[selectSelectedWorkout, selectElapsedSeconds],
 	(selectedWorkout, elapsedSeconds) => {
 		if (!selectedWorkout?.blocks.length) {
@@ -93,14 +91,9 @@ export const selectCurrentBlockDetails = createSelector(
 	},
 );
 
-export const selectCurrentBlock = createSelector(
+const selectCurrentBlock = createSelector(
 	[selectCurrentBlockDetails],
 	(details) => details.block,
-);
-
-export const selectCurrentBlockIndex = createSelector(
-	[selectCurrentBlockDetails],
-	(details) => details.index,
 );
 
 export const selectCurrentBlockRemainingSeconds = createSelector(

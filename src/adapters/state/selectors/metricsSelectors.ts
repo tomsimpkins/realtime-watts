@@ -2,7 +2,7 @@ import { createSelector } from "@reduxjs/toolkit";
 
 import type { RootState } from "../../../app/store";
 
-export const selectMetricsState = (state: RootState) => state.metrics;
+const selectMetricsState = (state: RootState) => state.metrics;
 
 export const RECENT_POWER_HISTOGRAM_GRAIN_MS = 5_000;
 
@@ -11,7 +11,7 @@ export interface PowerHistogramBin {
 	watts: number;
 }
 
-export const selectLatestPower = createSelector(
+const selectLatestPower = createSelector(
 	[selectMetricsState],
 	(metrics) => metrics.latestPower,
 );
@@ -45,7 +45,7 @@ export const selectDistanceDisplay = createSelector(
 			: "Unavailable",
 );
 
-export const selectRecentPower = createSelector(
+const selectRecentPower = createSelector(
 	[selectMetricsState],
 	(metrics) => metrics.recentPower,
 );

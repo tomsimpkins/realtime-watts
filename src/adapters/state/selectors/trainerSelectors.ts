@@ -14,14 +14,14 @@ export interface ConnectSetupModel {
 	showSecondaryAction?: "reconnect" | "retry";
 }
 
-export const selectTrainerState = (state: RootState) => state.trainer;
+const selectTrainerState = (state: RootState) => state.trainer;
 
-export const selectConnectionState = createSelector(
+const selectConnectionState = createSelector(
 	[selectTrainerState],
 	(trainer) => trainer.connectionState,
 );
 
-export const selectDevice = createSelector(
+const selectDevice = createSelector(
 	[selectTrainerState],
 	(trainer) => trainer.device,
 );
@@ -36,12 +36,12 @@ export const selectTrainerEnvironment = createSelector(
 	(trainer) => trainer.environment,
 );
 
-export const selectTrainerError = createSelector(
+const selectTrainerError = createSelector(
 	[selectTrainerState],
 	(trainer) => trainer.error,
 );
 
-export const selectTrainerCapabilities = createSelector(
+const selectTrainerCapabilities = createSelector(
 	[selectTrainerState],
 	(trainer) => trainer.capabilities,
 );
@@ -49,11 +49,6 @@ export const selectTrainerCapabilities = createSelector(
 export const selectTrainerCapabilityStatuses = createSelector(
 	[selectTrainerState],
 	(trainer) => trainer.capabilityStatuses,
-);
-
-export const selectTrainerTopology = createSelector(
-	[selectTrainerState],
-	(trainer) => trainer.topology,
 );
 
 export const selectDegradedDuringRide = createSelector(
@@ -67,7 +62,7 @@ export const selectIsTrainerReady = createSelector(
 		connectionState === "connected" && capabilities.power,
 );
 
-export const selectCanStartSetup = createSelector(
+const selectCanStartSetup = createSelector(
 	[selectTrainerState],
 	(trainer) => {
 		const isBusy =
@@ -90,7 +85,7 @@ export const selectCanStartSetup = createSelector(
 	},
 );
 
-export const selectCanRetrySetup = createSelector(
+const selectCanRetrySetup = createSelector(
 	[selectTrainerState],
 	(trainer) => {
 		const isBusy =
@@ -104,8 +99,6 @@ export const selectCanRetrySetup = createSelector(
 		);
 	},
 );
-
-export const selectCanContinueFromConnect = selectIsTrainerReady;
 
 export const selectConnectSetupModel = createSelector(
 	[
