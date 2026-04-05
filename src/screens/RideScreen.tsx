@@ -13,9 +13,13 @@ import {
 	selectRecentPowerHistogram,
 	selectSpeedDisplay,
 } from "../state/metricsSelectors";
-import { retryTrainerConnection } from "../state/trainerThunks";
+import {
+	endWorkoutSession,
+	pauseWorkoutSession,
+	resumeWorkoutSession,
+	retryTrainerConnection,
+} from "../state/trainerThunks";
 import { selectRideBannerModel } from "../state/trainerSelectors";
-import { endWorkout, pauseWorkout, resumeWorkout } from "../state/workoutSlice";
 import {
 	selectCanEndWorkout,
 	selectCanPauseWorkout,
@@ -48,7 +52,7 @@ export function RideScreen() {
 	const workoutSummary = useAppSelector(selectWorkoutSummary);
 
 	const handleEndRide = () => {
-		dispatch(endWorkout());
+		dispatch(endWorkoutSession());
 		navigate("/workouts");
 	};
 
@@ -139,7 +143,7 @@ export function RideScreen() {
 				{canPause ? (
 					<Button
 						className="button-quiet"
-						onClick={() => dispatch(pauseWorkout(Date.now()))}
+						onClick={() => dispatch(pauseWorkoutSession())}
 					>
 						Pause
 					</Button>
@@ -147,7 +151,7 @@ export function RideScreen() {
 				{canResume ? (
 					<Button
 						className="button-quiet"
-						onClick={() => dispatch(resumeWorkout(Date.now()))}
+						onClick={() => dispatch(resumeWorkoutSession())}
 					>
 						Resume
 					</Button>

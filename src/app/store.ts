@@ -10,7 +10,6 @@ import metricsReducer from "../state/metricsSlice";
 import trainerReducer from "../state/trainerSlice";
 import workoutReducer from "../state/workoutSlice";
 import { listenerMiddleware } from "./listenerMiddleware";
-import { registerWorkoutListeners } from "../state/workoutListeners";
 
 const rootReducer = combineReducers({
 	app: appReducer,
@@ -28,8 +27,6 @@ export type DeepPartial<T> = {
 			: T[K];
 };
 
-let listenersRegistered = false;
-
 export function createAppStore(preloadedState?: DeepPartial<RootState>) {
 	const store = configureStore({
 		reducer: rootReducer,
@@ -37,11 +34,6 @@ export function createAppStore(preloadedState?: DeepPartial<RootState>) {
 			getDefaultMiddleware().prepend(listenerMiddleware.middleware),
 		preloadedState: preloadedState as RootState | undefined,
 	});
-
-	if (!listenersRegistered) {
-		registerWorkoutListeners(listenerMiddleware.startListening);
-		listenersRegistered = true;
-	}
 
 	return store;
 }
